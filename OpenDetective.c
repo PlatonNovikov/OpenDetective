@@ -95,7 +95,15 @@ typedef enum type {
 typedef struct npc {
     char firstName[100];
     char lastName[100];
+    room* placeOfResidence;
+    void** relationship;
 } npc;
+
+typedef struct relationship {
+    npc* npc1;
+    npc* npc2;
+    signed int relationship_type;
+} relationship;
 
 typedef struct room {
     npc* npc;
@@ -122,6 +130,7 @@ typedef struct city {
     char name[100];
     int width, height;
     building*** cityMap;
+    building*** buildingTypes; //[0] - RESIDENTIAL, [1] - OFFICE
 } city;
 
 typedef struct player {
@@ -205,6 +214,10 @@ npc* generate_npc() {
     return new_npc;
 }
 
+void generate_random_relationship(npc* npc1, city* c) {
+    npc* npc2 = c->buildingTypes[0][rand() % sizeof(c->buildingTypes[0])]->floors[rand() % 5]''
+}
+
 
 void player_building_spawn(city* c, player* p){
     for (int x = p->x; x < c->height; ++x) {
@@ -280,6 +293,33 @@ void start(city* c, player* p) {
         }
     }
 
+    int residential = 0;
+    int office = 0;
+    for (int i = 0; i < c->height; i++) {
+        for (int j = 0; j < c->width; j++) {
+            if (c->cityMap[i][j]->building_type == RESIDENTIAL) {
+                residential++;
+            } else {
+                office++;
+            }
+        }
+    }
+    c->buildingTypes = (building***)malloc(2 * sizeof(building**));
+    if (!c->buildingTypes) {
+        printf("Error allocating memory for building types.\n");
+        exit(1);
+    }
+    c->buildingTypes[0] = (building**)malloc(residential * sizeof(building*));
+    if (!c->buildingTypes[0]) {
+        printf("Error allocating memory for residential buildings.\n");
+        exit(1);
+    }
+    c->buildingTypes[1] = (building**)malloc(office * sizeof(building*));
+    if (!c->buildingTypes[1]) {
+        printf("Error allocating memory for office buildings.\n");
+        exit(1);
+    }
+
     for (int i = 0; i < c->height; i++) {
         for (int j = 0; j < c->width; j++) {
             building* b = c->cityMap[i][j];
@@ -288,6 +328,7 @@ void start(city* c, player* p) {
                     for (int l = 0; l < 4; l++) {
                         room* r = b->floors[k]->rooms[l];
                         r->npc = generate_npc();    
+                        r->npc->placeOfResidence = r;
                     }     
                 }
             }
@@ -331,6 +372,34 @@ void start(city* c, player* p) {
         }
     }
 }*/
+
+void printMap(city* c, player* p) {
+    for (int i = 0; i < c->height; i++) {
+        for (int j = 0; j < c->width; j++) {
+            if (p->x == i && p->y == j) {
+                printf("☺");
+            } else{
+            if (c->cityMap[i][j]) {
+                switch (c->cityMap[i][j]->building_type)
+                {
+                case RESIDENTIAL:
+                    printf("⌂");
+                    break;
+                
+                case OFFICE:
+                    printf("F");
+                    break;
+                    
+                default:
+                    break;
+                }
+            } else {
+                printf(" ");
+            }}
+        }
+        printf("\n");
+    }
+}
 
 void playerControl(city* c, player* p) {
     int choice;
@@ -439,7 +508,7 @@ void playerControl(city* c, player* p) {
     else {
         printf("\n--- You are outside ---\n");
         printf("1. Enter a Building\n");
-        printf("2. Explore the City\n");
+        printf("2. See a city map\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
 
@@ -458,14 +527,13 @@ void playerControl(city* c, player* p) {
                 break;
             }
             case 2:
-                printf("\nYou are exploring the city...\n");
+                printMap(c, p);
                 break;
             default:
                 printf("\nInvalid choice. Try again.\n");
         }
     }
 }
-
 
 void freeCity(city* c) {
     for (int i = 0; i < c->height; i++) {
@@ -486,22 +554,6 @@ void freeCity(city* c) {
         free(c->cityMap[i]);
     }
     free(c->cityMap);
-}
-
-void printMap(city* c, player* p) {
-    for (int i = 0; i < c->height; i++) {
-        for (int j = 0; j < c->width; j++) {
-            if (p->x == i && p->y == j) {
-                printf("☺");
-            } else{
-            if (c->cityMap[i][j]) {
-                printf("⌂");
-            } else {
-                printf(" ");
-            }}
-        }
-        printf("\n");
-    }
 }
 
 int main(){
