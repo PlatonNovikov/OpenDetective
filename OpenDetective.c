@@ -66,6 +66,37 @@ const char *suffixes[SUFFIX_COUNT] = {
     "of Sanctity", "of Purity", "of Courage", "of Bravery", "of Honor", "of Wisdom", "of Knowledge", "of Triumph", "of Discovery", "of Adventure"
 };
 
+const char *first_half[50] = {
+    "Tech", "Data", "Cyber", "Quantum", "Global", "Sky", "Future", "Net", "Digital", "Soft",
+    "Mega", "Neo", "Alpha", "Blue", "Smart", "Core", "Eco", "Next", "Vision", "World",
+    "Cloud", "Info", "Green", "Max", "Zen", "Vero", "Space", "Gen", "Secure", "Prime",
+    "Virtual", "Flex", "Edge", "Inno", "Power", "Pro", "Data", "Logic", "Link", "Nova",
+    "Perfect", "Bright", "Visionary", "Infinity", "Matrix", "Elite", "Start", "Techno", "Future",
+    "Pixel"
+};
+
+const char *second_half[50] = {
+    "Solutions", "Systems", "Group", "Labs", "Enterprises", "Corporation", "Technologies", "Inc", "Co", "Consulting",
+    "Networks", "Studios", "Design", "Industries", "Partners", "International", "Holdings", "Industries", "Consultants", 
+    "Development", "Team", "Ventures", "Services", "Experts", "Works", "Global", "Digital", "Connections",
+    "Research", "Power", "Tech", "Media", "Consult", "Core", "Industry", "Innovations", "Dynamics", "Advisors",
+    "Creations", "Innovation", "Pioneers", "Future", "Solutions", "Systems", "Manufacturers", "Engineering", "Apps", 
+    "Integrations", "Technica", "Strive"
+};
+
+char* generateCompanyName() {
+    // Аллоцируем память для названия
+    static char companyName[100];
+
+    // Генерация случайных индексов для двух частей
+    int firstPartIndex = rand()%50;
+    int secondPartIndex = rand()%50;
+
+    // Формирование полного названия
+    snprintf(companyName, sizeof(companyName), "%s %s", first_half[firstPartIndex], second_half[secondPartIndex]);
+    return companyName;
+}
+
 char* generate_street_name() {
     static char result[100];
     const char *prefix = prefixes[rand() % PREFIX_COUNT];
@@ -83,7 +114,6 @@ void printMatrix(int** matrix, int height, int width) {
         }
         printf("\n");
     }
-
 }
 
 typedef enum type {
@@ -95,15 +125,9 @@ typedef enum type {
 typedef struct npc {
     char firstName[100];
     char lastName[100];
-    room* placeOfResidence;
-    void** relationship;
+    void* placeOfResidence;
+    void* placeOfWork;
 } npc;
-
-typedef struct relationship {
-    npc* npc1;
-    npc* npc2;
-    signed int relationship_type;
-} relationship;
 
 typedef struct room {
     npc* npc;
@@ -111,11 +135,26 @@ typedef struct room {
     int room_number;
 } room;
 
-typedef struct floor {
-    int floorNumber;
+typedef struct residentialFloor{
     room** rooms;
     int room_count;
+}residentialFloor;
+
+typedef struct office{
+    char name[100];
+    npc** employees;
+    int employee_count;
+}office;
+
+typedef struct officeFloor{
+    office** offices;
+    int office_count;
+}officeFloor;
+
+typedef struct floor {
+    int floorNumber;
     type floor_type;
+    void* floor_type_data;
 } floor;
 
 typedef struct building {
@@ -130,7 +169,10 @@ typedef struct city {
     char name[100];
     int width, height;
     building*** cityMap;
-    building*** buildingTypes; //[0] - RESIDENTIAL, [1] - OFFICE
+    building** residentialBuildingsList;
+    building** officeBuildingsList;
+    int residentialBuildings;
+    int officeBuildings;
 } city;
 
 typedef struct player {
@@ -163,41 +205,54 @@ void allocateFloors(building* b) {
         switch (b->building_type) {
         case RESIDENTIAL:
             f->floor_type = RESIDENTIAL;
+            f->floor_type_data = (residentialFloor*)malloc(sizeof(residentialFloor));
+            if (!f->floor_type_data) {
+                printf("Error allocating memory for residential floor data.\n");
+                free(f);
+                exit(1);
+            }
+            ((residentialFloor*)f->floor_type_data)->room_count = 4;
+            ((residentialFloor*)f->floor_type_data)->rooms = (room**)malloc(4 * sizeof(room*));
+            if (!((residentialFloor*)f->floor_type_data)->rooms) {
+                printf("Error allocating memory for rooms.\n");
+                free(f->floor_type_data);
+                free(f);
+                exit(1);
+            }
+            for (int j = 0; j < 4; j++) {
+                room* r = (room*)malloc(sizeof(room));
+                if (!r) {
+                    printf("Error allocating memory for room.\n");
+                    for (int k = 0; k < j; k++) {
+                        free(((residentialFloor*)f->floor_type_data)->rooms[k]);
+                    }
+                    free(((residentialFloor*)f->floor_type_data)->rooms);
+                    free(f->floor_type_data);
+                    free(f);
+                    exit(1);
+                }
+                r->npc = NULL;
+                r->parentFloor = f;
+                r->room_number = j;
+                ((residentialFloor*)f->floor_type_data)->rooms[j] = r;
+            }
             break;
         case OFFICE:
             f->floor_type = OFFICE;
+            f->floor_type_data = (officeFloor*)malloc(sizeof(officeFloor));
+            if (!f->floor_type_data) {
+                printf("Error allocating memory for office floor data.\n");
+                free(f);
+                exit(1);
+            }
+            ((officeFloor*)f->floor_type_data)->office_count = 3;
+            ((officeFloor*)f->floor_type_data)->offices = (office**)malloc(((officeFloor*)f->floor_type_data)->office_count * sizeof(office*));
             break;
         default:
             printf("Unknown building type.\n");
             free(f);
             exit(1);
         }
-
-        // Выделяем память для комнат
-        f->rooms = (room**)malloc(4 * sizeof(room*));
-        if (!f->rooms) {
-            printf("Error allocating memory for rooms.\n");
-            free(f);
-            exit(1);
-        }
-
-        for (int j = 0; j < 4; j++) {
-            room* r = (room*)malloc(sizeof(room));
-            if (!r) {
-                printf("Error allocating memory for room.\n");
-                for (int k = 0; k < j; k++) {
-                    free(f->rooms[k]);
-                }
-                free(f->rooms);
-                free(f);
-                exit(1);
-            }
-            r->npc = NULL;
-            r->parentFloor = f;
-            r->room_number = j;
-            f->rooms[j] = r;
-        }
-
         b->floors[i] = f;
     }
 }
@@ -213,11 +268,6 @@ npc* generate_npc() {
     snprintf(new_npc->lastName, sizeof(new_npc->lastName), "%s", last_names[rand() % ARRAY_SIZE]);
     return new_npc;
 }
-
-void generate_random_relationship(npc* npc1, city* c) {
-    npc* npc2 = c->buildingTypes[0][rand() % sizeof(c->buildingTypes[0])]->floors[rand() % 5]''
-}
-
 
 void player_building_spawn(city* c, player* p){
     for (int x = p->x; x < c->height; ++x) {
@@ -241,6 +291,37 @@ void player_building_spawn(city* c, player* p){
                 return;
             }
         }
+    }
+}
+
+void getNPCresidence(city* c, npc* n){
+    int countC = rand() % c->residentialBuildings;
+    int countB = countC;
+    int floorC = rand() % c->residentialBuildingsList[countC]->height;
+    int floorB = floorC;
+    int roomC = rand() % 4;
+    int roomB = roomC;
+    while (((residentialFloor*)c->residentialBuildingsList[countC]->floors[floorC]->floor_type_data)->rooms[roomC]->npc){
+        if (roomC < 3){
+            roomC++;
+        } else {
+            roomC = 0;
+            if (floorC < c->residentialBuildingsList[countC]->height){
+                floorC++;
+            } else {
+                floorC = 0;
+                if (countC < c->residentialBuildings){
+                    countC++;
+                } else {
+                    countC = 0;
+                }
+            }
+        }
+        if (countC == countB && floorC == floorB && roomC == roomB){
+            return;
+        }
+    n->placeOfResidence = ((residentialFloor*)c->residentialBuildingsList[countC]->floors[floorC]->floor_type_data)->rooms[roomC];
+    ((residentialFloor*)c->residentialBuildingsList[countC]->floors[floorC]->floor_type_data)->rooms[roomC]->npc = n;
     }
 }
 
@@ -293,85 +374,96 @@ void start(city* c, player* p) {
         }
     }
 
-    int residential = 0;
-    int office = 0;
+    c->residentialBuildings = 0;
+    c->officeBuildings = 0;
     for (int i = 0; i < c->height; i++) {
         for (int j = 0; j < c->width; j++) {
             if (c->cityMap[i][j]->building_type == RESIDENTIAL) {
-                residential++;
+                c->residentialBuildings++;
             } else {
-                office++;
+                c->officeBuildings++;
             }
         }
     }
-    c->buildingTypes = (building***)malloc(2 * sizeof(building**));
-    if (!c->buildingTypes) {
-        printf("Error allocating memory for building types.\n");
-        exit(1);
-    }
-    c->buildingTypes[0] = (building**)malloc(residential * sizeof(building*));
-    if (!c->buildingTypes[0]) {
+
+    c->residentialBuildingsList = (building**)malloc(c->residentialBuildings * sizeof(building*));
+    if (!c->residentialBuildingsList) {
         printf("Error allocating memory for residential buildings.\n");
         exit(1);
     }
-    c->buildingTypes[1] = (building**)malloc(office * sizeof(building*));
-    if (!c->buildingTypes[1]) {
+    c->officeBuildingsList = (building**)malloc(c->officeBuildings * sizeof(building*));
+    if (!c->officeBuildingsList) {
         printf("Error allocating memory for office buildings.\n");
         exit(1);
     }
 
+    int countR = 0;
+    int countO = 0;
+    for (int i = 0; i < c->height; i++) {
+        for (int j = 0; j < c->width; j++) {
+            if (c->cityMap[i][j]->building_type == RESIDENTIAL) {
+                c->residentialBuildingsList[countR] = c->cityMap[i][j];
+                countR++;
+            } else {
+                c->officeBuildingsList[countO] = c->cityMap[i][j];
+                countO++;
+            }
+        }
+    }
+    printf("AAAAAA");
     for (int i = 0; i < c->height; i++) {
         for (int j = 0; j < c->width; j++) {
             building* b = c->cityMap[i][j];
             for (int k = 0; k < b->height; k++) {
-                if (b->floors[k]->floor_type == RESIDENTIAL){
-                    for (int l = 0; l < 4; l++) {
-                        room* r = b->floors[k]->rooms[l];
-                        r->npc = generate_npc();    
-                        r->npc->placeOfResidence = r;
-                    }     
+                if (b->floors[k]->floor_type == OFFICE){
+                    for (int l = 0; l < ((officeFloor*)b->floors[k]->floor_type_data)->office_count; l++){
+                        office* o = ((officeFloor*)b->floors[k]->floor_type_data)->offices[l];
+                        snprintf(o->name, sizeof(o->name), "%s", generateCompanyName());
+                        o->employee_count = rand() % 10 + 1; // От 1 до 10 сотрудников
+                        o->employees = (npc**)malloc(o->employee_count * sizeof(npc*));
+                        if (!o->employees) {
+                            printf("Error allocating memory for employees.\n");
+                            free(o);
+                            exit(1);
+                        }
+                    } 
                 }
             }
         }
     }
+    
+    for (int i = 0; i < c->officeBuildings; i++){
+        for (int j = 0; j < c->officeBuildingsList[i]->height; j++){
+            for (int k = 0; k < ((officeFloor*)c->officeBuildingsList[i]->floors[j]->floor_type_data)->office_count; k++){
+                for (int l = 0; l < ((office*)c->officeBuildingsList[i]->floors[j]->floor_type_data)->employee_count; l++){
+                    ((office*)c->officeBuildingsList[i]->floors[j]->floor_type_data)->employees[l] = generate_npc();
+                    getNPCresidence(c, ((office*)c->officeBuildingsList[i]->floors[j]->floor_type_data)->employees[l]);
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < c->residentialBuildings; i++){
+        for (int j = 0; j < c->residentialBuildingsList[i]->height; j++){
+            for (int k = 0; k < ((residentialFloor*)c->residentialBuildingsList[i]->floors[j]->floor_type_data)->room_count; k++){
+                if (!((residentialFloor*)c->residentialBuildingsList[i]->floors[j]->floor_type_data)->rooms[k]->npc){
+                    ((residentialFloor*)c->residentialBuildingsList[i]->floors[j]->floor_type_data)->rooms[k]->npc = generate_npc();
+                }
+            }
+        }
+    }
+
     p->x = rand() % c->height;
     p->y = rand() % c->width;
     player_building_spawn(c, p);
     p->currentBuilding = c->cityMap[p->x][p->y];
     p->currentFloor = p->currentBuilding->floors[rand() % p->currentBuilding->height];
-    p->currentRoom = p->currentFloor->rooms[rand() % 4];
+    p->currentRoom = ((residentialFloor*)p->currentFloor->floor_type_data)->rooms[rand() % 4];
 
 
     printf("City generated successfully.\n");
 
 }
-
-/*void inspect_building(city* c) {
-    int x, y;
-    printf("Enter building coordinates (x y): ");
-    scanf("%d %d", &x, &y);
-    
-    if (x < 0 || x >= c->height || y < 0 || y >= c->width) {
-        printf("Invalid coordinates.\n");
-        return;
-    }
-    
-    building* b = c->cityMap[x][y];
-    printf("Building: %s\n", b->name);
-    printf("Height: %d floors\n", b->height);
-    
-    for (int i = 0; i < b->height; i++) {
-        printf(" Floor %d:\n", i + 1);
-        for (int j = 0; j < 4; j++) {
-            room r = b->floors[i]->rooms[j];
-            if (r.npc) {
-                printf("  Room %d: %s %s\n", j + 1, r.npc->firstName, r.npc->lastName);
-            } else {
-                printf("  Room %d: Empty\n", j + 1);
-            }
-        }
-    }
-}*/
 
 void printMap(city* c, player* p) {
     for (int i = 0; i < c->height; i++) {
@@ -449,7 +541,7 @@ void playerControl(city* c, player* p) {
                 if (roomNumber < 1 || roomNumber > 4) {
                     printf("\nInvalid room number. Try again.\n");
                 } else {
-                    p->currentRoom = p->currentFloor->rooms[roomNumber - 1];
+                    p->currentRoom = ((residentialFloor*)p->currentFloor->floor_type_data)->rooms[roomNumber - 1];
                     printf("\nYou entered Room %d.\n", roomNumber);
                 }
                 break;
@@ -541,7 +633,7 @@ void freeCity(city* c) {
             building* b = c->cityMap[i][j];
             for (int k = 0; k < b->height; k++) {
                 for (int l = 0; l < 4; l++) {
-                    room* r = b->floors[k]->rooms[l];
+                    room* r = ((residentialFloor*)b->floors[k]->floor_type_data)->rooms[l];
                     if (r->npc) {
                         free(r->npc);
                     }
