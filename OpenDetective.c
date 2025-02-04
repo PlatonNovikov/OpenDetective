@@ -450,9 +450,11 @@ void start(city* c, player* p) {
     for (int i = 0; i < c->officeBuildings; i++){
         for (int j = 0; j < c->officeBuildingsList[i]->height; j++){
             for (int k = 0; k < ((officeFloor*)c->officeBuildingsList[i]->floors[j]->floor_type_data)->office_count; k++){
-                for (int l = 0; l < ((office*)c->officeBuildingsList[i]->floors[j]->floor_type_data)->employee_count; l++){
-                    ((office*)c->officeBuildingsList[i]->floors[j]->floor_type_data)->employees[l] = generate_npc();
-                    getNPCresidence(c, ((office*)c->officeBuildingsList[i]->floors[j]->floor_type_data)->employees[l]);
+                printf("%d\n", ((officeFloor*)c->officeBuildingsList[i]->floors[j]->floor_type_data)->offices[k]->employee_count);
+                for (int l = 0; l < ((officeFloor*)c->officeBuildingsList[i]->floors[j]->floor_type_data)->offices[k]->employee_count; l++){
+                    ((officeFloor*)c->officeBuildingsList[i]->floors[j]->floor_type_data)->offices[k]->employees[l] = generate_npc();
+                    getNPCresidence(c, ((officeFloor*)c->officeBuildingsList[i]->floors[j]->floor_type_data)->offices[k]->employees[l]);
+                    printf("aaaaa4\n");
                 }
             }
         }
@@ -484,25 +486,16 @@ void printMap(city* c, player* p) {
     for (int i = 0; i < c->height; i++) {
         for (int j = 0; j < c->width; j++) {
             if (p->x == i && p->y == j) {
-                printf("☺");
-            } else{
-            if (c->cityMap[i][j]) {
-                switch (c->cityMap[i][j]->building_type)
-                {
-                case RESIDENTIAL:
-                    printf("⌂");
-                    break;
-                
-                case OFFICE:
-                    printf("F");
-                    break;
-                    
-                default:
-                    break;
+                printf("☺"); // Player icon
+            } else if (c->cityMap[i][j]) {
+                switch (c->cityMap[i][j]->building_type) {
+                    case RESIDENTIAL: printf("⌂"); break; // House
+                    case OFFICE: printf("F"); break;    // Office building
+                    default: printf("?"); break;        // Unknown building
                 }
             } else {
-                printf(" ");
-            }}
+                printf("."); // Empty space
+            }
         }
         printf("\n");
     }
@@ -511,110 +504,131 @@ void printMap(city* c, player* p) {
 void playerControl(city* c, player* p) {
     int choice;
     
-    if(p->currentBuilding){
-        switch (p->currentFloor->floor_type){
+    if (p->currentBuilding) {
+        printf("You are inside %s, on floor %d.\n", p->currentBuilding->name, p->currentFloor->floorNumber);
+        
+        switch (p->currentFloor->floor_type) {
             case RESIDENTIAL:
-                if (p->currentRoom){
-                    if(p->currentRoom->npc){
+                if (p->currentRoom) {
+                    if (p->currentRoom->npc) {
                         printf("You are in %s %s's room.\n", p->currentRoom->npc->firstName, p->currentRoom->npc->lastName);
                         printf("1. Talk to %s %s\n", p->currentRoom->npc->firstName, p->currentRoom->npc->lastName);
-                        printf("2. Go back\n");
+                        printf("2. Leave the room\n");
+                        printf("Your choice: ");
                         scanf("%d", &choice);
-                        switch (choice)
-                        {
-                        case 1:
-                            printf("Hello, my name is %s %s.\n", p->currentRoom->npc->firstName, p->currentRoom->npc->lastName);
-                            break;
-                        case 2:
+                        
+                        if (choice == 1) {
+                            printf("%s %s says: 'Hello! Welcome to my room.'\n", p->currentRoom->npc->firstName, p->currentRoom->npc->lastName);
+                        } else if (choice == 2) {
                             p->currentRoom = NULL;
-                            break;
-                        default:
-                            break;
                         }
                     } else {
-                        printf("You are in an empty room.\n");
-                        printf("1. Go back\n");
+                        printf("The room is empty.\n");
+                        printf("1. Leave the room\n");
+                        printf("Your choice: ");
                         scanf("%d", &choice);
-                        switch (choice)
-                        {
-                        case 1:
-                            p->currentRoom = NULL;
-                            break;
-                        default:
-                            break;
-                        }
+                        if (choice == 1) p->currentRoom = NULL;
                     }
-                }
-                else{
-                    printf("You are on the %d floor of %s.\n", p->currentFloor->floorNumber, p->currentBuilding->name);
-                    printf("1. Go to the room (0-3)\n");
-                    printf("2. Go back\n");
+                } else {
+                    printf("1. Enter a room (0-3)\n");
+                    printf("2. Leave the building\n");
+                    printf("Your choice: ");
                     scanf("%d", &choice);
-                    switch (choice)
-                    {
-                    case 1:
+                    
+                    if (choice == 1) {
                         printf("Enter room number: ");
                         scanf("%d", &choice);
-                        if (choice >= 0 && choice < 4){
+                        if (choice >= 0 && choice < 4) {
                             p->currentRoom = ((residentialFloor*)p->currentFloor->floor_type_data)->rooms[choice];
+                        } else {
+                            printf("Invalid room number.\n");
                         }
-                        break;
-                    case 2:
+                    } else if (choice == 2) {
                         p->currentFloor = NULL;
-                        break;
-                    default:
-                        break;
+                        p->currentBuilding = NULL;
                     }
                 }
                 break;
+            
             case OFFICE:
                 printf("You are in an office building.\n");
-                break;
-            default:
+                printf("1. Enter an office (0-2)\n");
+                printf("2. Leave the building\n");
+                printf("Your choice: ");
+                scanf("%d", &choice);
+                switch (choice)
+                {
+                case 1:
+                    printf("Enter office number: ");
+                    scanf("%d", &choice);
+                    if (choice >= 0 && choice < ((officeFloor*)p->currentFloor->floor_type_data)->office_count) {
+                        office* o = ((officeFloor*)p->currentFloor->floor_type_data)->offices[choice];
+                        printf("You are in %s.\n", o->name);
+                        printf("1. Talk to employees\n");
+                        printf("2. Leave the office\n");
+                        printf("Your choice: ");
+                        scanf("%d", &choice);
+                        if (choice == 1) {
+                            for (int i = 0; i < o->employee_count; i++) {
+                                printf("%s %s\n", o->employees[i]->firstName, o->employees[i]->lastName);
+                            }
+                        }
+                    } else {
+                        printf("Invalid office number.\n");
+                    }
+                    break;
+                
+                case 2:
+                    p->currentFloor = NULL;
+                    p->currentBuilding = NULL;
+                    break;
+
+                default:
+                    break;
+                }
                 break;
         }
-    }
-    else{
-        printf("You are outside at %s.\n", c->cityMap[p->x][p->y]->name);
+    } else {
+        printf("You are outside at %s.\n", c->cityMap[p->x][p->y] ? c->cityMap[p->x][p->y]->name : "an empty lot");
         printf("1. Enter the building\n");
         printf("2. Move\n");
-        printf("3. Map\n");
+        printf("3. View map\n");
+        printf("Your choice: ");
         scanf("%d", &choice);
-        switch (choice)
-        {
-        case 1:
-            p->currentBuilding = c->cityMap[p->x][p->y];
-            p->currentFloor = p->currentBuilding->floors[rand() % p->currentBuilding->height];
-            break;
-        case 2:
-            printf("Enter direction (1 - up, 2 - down, 3 - left, 4 - right): ");
-            scanf("%d", &choice);
-            switch (choice)
-            {
+        
+        switch (choice) {
             case 1:
-                if (p->x > 0) {
-                    p->x--;
+                if (c->cityMap[p->x][p->y]) {
+                    p->currentBuilding = c->cityMap[p->x][p->y];
+                    p->currentFloor = p->currentBuilding->floors[rand() % p->currentBuilding->height];
+                } else {
+                    printf("There is no building here.\n");
                 }
                 break;
+            
             case 2:
-                if (p->x < c->height - 1) {
-                    p->x++;
+                printf("Choose a direction:\n");
+                printf("1. Up\n2. Down\n3. Left\n4. Right\n");
+                printf("Your choice: ");
+                scanf("%d", &choice);
+                
+                switch (choice) {
+                    case 1: if (p->x > 0) p->x--; break;
+                    case 2: if (p->x < c->height - 1) p->x++; break;
+                    case 3: if (p->y > 0) p->y--; break;
+                    case 4: if (p->y < c->width - 1) p->y++; break;
+                    default: printf("Invalid direction.\n"); break;
                 }
                 break;
+            
             case 3:
-                if (p->y > 0) {
-                    p->y--;
-                }
+                printMap(c, p);
                 break;
-            case 4:
-                if (p->y < c->width - 1) {
-                    p->y++;
-                }
-                break;
+            
             default:
+                printf("Invalid choice.\n");
                 break;
-            }
-            break;
+        }
     }
 }
 
