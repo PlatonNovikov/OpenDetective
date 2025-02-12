@@ -9,6 +9,7 @@
 #define ARRAY_SIZE 100
 #define FIRST_HALF_COMPANY 50
 #define SECOND_HALF_COMPANY 50
+#define MAX_RELATIONSHIPS 100
 #define THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
 #define clear() printf("\033[H\033[J")
 
@@ -124,11 +125,20 @@ typedef enum relationship_type {
 
 // Forward declaration of npc struct
 typedef struct npc npc;
+typedef struct room room;
+typedef struct residentialFloor residentialFloor;
+typedef struct office office;
+typedef struct officeFloor officeFloor;
+typedef struct floor floor;
+typedef struct building building;
+typedef struct city city;
+typedef struct player player;
 
 typedef struct relationship {
     npc* target;                // Pointer to the related NPC
     relationship_type type;     // Type of relationship
     int strength;               // 0-100 (e.g., closeness, trust)
+    int count;                  // Number of interactions
 } relationship;
 
 typedef struct npc {
@@ -144,30 +154,34 @@ typedef struct npc {
 typedef struct room {
     npc** npcs;          // Array of NPC pointers
     int npc_count;
-    void* parentFloor;
     int room_number;
+    floor* parentFloor;
 } room;
 
 typedef struct residentialFloor{
     room** rooms;
     int room_count;
+    floor* parentFloor;
 }residentialFloor;
 
 typedef struct office{
     char name[100];
     npc** employees;
     int employee_count;
+    floor* parentFloor;
 }office;
 
 typedef struct officeFloor{
     office** offices;
     int office_count;
+    floor* parentFloor;
 }officeFloor;
 
 typedef struct floor {
     int floorNumber;
     type floor_type;
     void* floor_type_data;
+    building* parentBuilding;
 } floor;
 
 typedef struct building {
@@ -175,6 +189,7 @@ typedef struct building {
     int x, y;
     int height;
     floor** floors;
+    city* parentCity;
     type building_type;
 } building;
 
@@ -186,6 +201,8 @@ typedef struct city {
     building** officeBuildingsList;
     int residentialBuildings;
     int officeBuildings;
+    int time;  // 0-23 (часы)
+    int day;   // Дни с начала игры
 } city;
 
 typedef struct player {
@@ -207,13 +224,13 @@ void allocateFloors(building* b) {
     }
 
     for (int i = 0; i < b->height; i++) {
-        printf("Allocating memory for floor %d\n", i);
         floor* f = (floor*)malloc(sizeof(floor));
         if (!f) {
             printf("Error allocating memory for floor.\n");
             exit(1);
         }
         f->floorNumber = i;
+        f->parentBuilding = b;
 
         // Определяем тип этажа
         switch (b->building_type) {
@@ -274,8 +291,8 @@ void allocateFloors(building* b) {
             }
             officeFloor* of = (officeFloor*)f->floor_type_data;
             of->office_count = 3;
+            of->parentFloor = f;
             of->offices = (office**)malloc(of->office_count * sizeof(office*));
-
             if (!of->offices) {
                 printf("Error allocating memory for offices.\n");
                 free(of);
@@ -284,6 +301,7 @@ void allocateFloors(building* b) {
 
             for (int i = 0; i < of->office_count; i++) {
                 of->offices[i] = (office*)malloc(sizeof(office));
+                of->offices[i]->parentFloor = f;
                 if (!of->offices[i]) {
                     printf("Error allocating memory for office.\n");
                     exit(1);
@@ -307,6 +325,13 @@ npc* generate_npc() {
     }
     snprintf(new_npc->firstName, sizeof(new_npc->firstName), "%s", first_names[rand() % ARRAY_SIZE]);
     snprintf(new_npc->lastName, sizeof(new_npc->lastName), "%s", last_names[rand() % ARRAY_SIZE]);
+    new_npc->relationships = (relationship*)malloc(MAX_RELATIONSHIPS * sizeof(relationship));
+    if (!new_npc->relationships) {
+        printf("Error allocating memory for relationships.\n");
+        free(new_npc);
+        exit(1);
+    }
+    new_npc->relationshipCount = 0;
     return new_npc;
 }
 
@@ -401,7 +426,8 @@ void start(city* c, player* p) {
             snprintf(b->name, sizeof(b->name), "%s", generate_street_name());
             b->x = i;
             b->y = j;
-            b->height = rand() % 5 + 1; // Высота от 1 до 5 этажей
+            b->height = rand() % 7 + 3; // Высота от 3 до 10 этажей
+            b->parentCity = c;
             switch (rand()%10)
             {
             case 0:
@@ -506,7 +532,6 @@ void start(city* c, player* p) {
     p->currentBuilding = c->cityMap[p->x][p->y];
     p->currentFloor = p->currentBuilding->floors[rand() % p->currentBuilding->height];
     p->currentRoom = ((residentialFloor*)p->currentFloor->floor_type_data)->rooms[rand() % 4];
-
 
     printf("City generated successfully!\n\n");
 
@@ -783,27 +808,113 @@ void playerControl(city* c, player* p) {
 }
 
 void freeCity(city* c) {
+    if (!c) return;
+
     for (int i = 0; i < c->height; i++) {
         for (int j = 0; j < c->width; j++) {
             building* b = c->cityMap[i][j];
+            if (!b) continue;
+
+            // Освобождаем этажи
             for (int k = 0; k < b->height; k++) {
-                for (int l = 0; l < 4; l++) {
-                    room* r = ((residentialFloor*)b->floors[k]->floor_type_data)->rooms[l];
-                    if (r->npcs[0]) {
-                        free(r->npcs[0]);
+                floor* f = b->floors[k];
+                if (!f) continue;
+
+                // Освобождаем данные этажа в зависимости от типа
+                switch (f->floor_type) {
+                    case RESIDENTIAL: {
+                        residentialFloor* resFloor = (residentialFloor*)f->floor_type_data;
+                        if (resFloor) {
+                            for (int l = 0; l < resFloor->room_count; l++) {
+                                room* r = resFloor->rooms[l];
+                                if (r) {
+                                    // Освобождаем NPC в комнате
+                                    if (r->npcs[0]) {
+                                        free(r->npcs[0]);
+                                    }
+                                    free(r->npcs); // Освобождаем массив NPC
+                                    free(r);       // Освобождаем саму комнату
+                                }
+                            }
+                            free(resFloor->rooms); // Освобождаем массив комнат
+                            free(resFloor);        // Освобождаем данные жилого этажа
+                        }
+                        break;
                     }
+
+                    case OFFICE: {
+                        officeFloor* of = (officeFloor*)f->floor_type_data;
+                        if (of) {
+                            for (int l = 0; l < of->office_count; l++) {
+                                office* o = of->offices[l];
+                                if (o) {
+                                    // Освобождаем сотрудников офиса
+                                    for (int m = 0; m < o->employee_count; m++) {
+                                        if (o->employees[m]) {
+                                            free(o->employees[m]);
+                                        }
+                                    }
+                                    free(o->employees); // Освобождаем массив сотрудников
+                                    free(o);            // Освобождаем сам офис
+                                }
+                            }
+                            free(of->offices); // Освобождаем массив офисов
+                            free(of);         // Освобождаем данные офисного этажа
+                        }
+                        break;
+                    }
+
+                    default:
+                        // Неизвестный тип этажа
+                        break;
                 }
-                free(b->floors[k]);
+
+                free(f); // Освобождаем сам этаж
             }
-            free(b->floors);
-            free(b);
+
+            free(b->floors); // Освобождаем массив этажей
+            free(b);         // Освобождаем само здание
         }
-        free(c->cityMap[i]);
+
+        free(c->cityMap[i]); // Освобождаем строку карты
     }
-    free(c->cityMap);
+
+    // Освобождаем списки зданий
+    if (c->residentialBuildingsList) {
+        free(c->residentialBuildingsList);
+    }
+    if (c->officeBuildingsList) {
+        free(c->officeBuildingsList);
+    }
+
+    free(c->cityMap); // Освобождаем карту города
 }
 
-int main(){
+void openCMD(){
+    #if defined(_WIN32) || defined(_WIN64)
+        system("start cmd.exe /K OpenDetective.exe --child");
+    #elif defined(__linux__) || defined(__unix__)
+        if (system("which gnome-terminal > /dev/null 2>&1") == 0) {
+            system("gnome-terminal -- bash -c './OpenDetective --child; exec bash'");
+        } else if (system("which xterm > /dev/null 2>&1") == 0) {
+            system("xterm -hold -e './OpenDetective --child' &");
+        } else if (system("which konsole > /dev/null 2>&1") == 0) {
+            system("konsole --hold -e './OpenDetective --child' &");
+        } else if (system("which terminator > /dev/null 2>&1") == 0) {
+            system("terminator -e './OpenDetective --child' &");
+        } else {
+            printf("error.\n");
+        }
+    #else
+        printf("go fuck yourself\n");
+    #endif
+}
+
+int main(int argc, char *argv[]){
+    if (argc < 2 || strcmp(argv[1], "--child") != 0) {
+        openCMD();  // Открываем новый терминал
+        return 0;   // Завершаем текущий процесс, чтобы избежать дублирования
+    }
     clear();
     //srand(time(NULL));
     srand(THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING);
