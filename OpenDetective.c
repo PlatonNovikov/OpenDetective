@@ -120,7 +120,6 @@ typedef enum relationship_type {
     FAMILY,
     FRIEND,
     COWORKER,
-    ROMANTIC
 } relationship_type;
 
 // Forward declaration of npc struct
@@ -169,6 +168,7 @@ typedef struct office{
     npc** employees;
     int employee_count;
     floor* parentFloor;
+    int office_number;
 }office;
 
 typedef struct officeFloor{
@@ -253,7 +253,6 @@ void allocateFloors(building* b) {
                 exit(1);
             }
             for (int j = 0; j < 4; j++) {
-                printf("254");
                 room* r = (room*)malloc(sizeof(room));
                 if (!r) {
                     printf("Error allocating memory for room.\n");
@@ -316,6 +315,12 @@ void allocateFloors(building* b) {
                 }
                 of->offices[j]->employee_count = 0;
                 of->offices[j]->employees = (npc**)malloc(5 * sizeof(npc*));
+                if (!of->offices[j]->employees) {
+                    printf("Error allocating memory for employees.\n");
+                    free(of->offices[j]);
+                    exit(1);
+                }
+                of->offices[j]->office_number = j;
             }
             break;
         default:
@@ -327,12 +332,7 @@ void allocateFloors(building* b) {
     }
 }
 
-npc* generate_npc() {
-    npc* new_npc = (npc*)malloc(sizeof(npc));
-    if (!new_npc) {
-        printf("Error allocating memory for NPC.\n");
-        exit(1);
-    }
+void generate_npc(npc* new_npc) {
     snprintf(new_npc->firstName, sizeof(new_npc->firstName), "%s", first_names[rand() % ARRAY_SIZE]);
     snprintf(new_npc->lastName, sizeof(new_npc->lastName), "%s", last_names[rand() % ARRAY_SIZE]);
     new_npc->relationships = (relationship*)malloc(MAX_RELATIONSHIPS * sizeof(relationship));
@@ -342,7 +342,22 @@ npc* generate_npc() {
         exit(1);
     }
     new_npc->relationshipCount = 0;
-    return new_npc;
+}
+
+void generate_family(int count, npc** family) {
+    if (!family) {
+        printf("Error allocating memory for family.\n");
+        exit(1);
+    }
+    for (int i = 0; i < count; i++){
+        family[i] = (npc*)malloc(sizeof(npc));
+        if (!family[i]) {
+            printf("Error allocating memory for NPC.\n");
+            exit(1);
+        }
+        generate_npc(family[i]);
+        strcpy(family[i]->lastName, family[0]->lastName);
+    }
 }
 
 room* getFreeResidence(city* c){
@@ -352,11 +367,7 @@ room* getFreeResidence(city* c){
     int floorB = floorC;
     int roomC = rand() % 4;
     int roomB = roomC;
-    // Corrected to use residentialBuildingsList and proper printf arguments
-    printf("%d %d", c->residentialBuildingsList[countC]->x, c->residentialBuildingsList[countC]->y);
     while (((residentialFloor*)c->residentialBuildingsList[countC]->floors[floorC]->floor_type_data)->rooms[roomC]->npcs[0]){
-        // Corrected to use residentialBuildingsList and proper format
-        printf("%d %d", c->residentialBuildingsList[countC]->x, c->residentialBuildingsList[countC]->y);
         if (roomC < 3){
             roomC++;
         } else {
@@ -413,17 +424,46 @@ void populateCity(city* c){
     for (int i = 0; i < c->residentialBuildings; i++){
         for (int j = 0; j < c->residentialBuildingsList[i]->height; j++){
             for (int k = 0; k < ((residentialFloor*)c->residentialBuildingsList[i]->floors[j]->floor_type_data)->room_count; k++){
-                npc* n = generate_npc();
-                n->placeOfResidence = getFreeResidence(c);
-                if (n->placeOfResidence){
-                    n->placeOfResidence->npcs[0] = n;
-                    n->placeOfResidence->npc_count += 1;
+                room* r = ((residentialFloor*)c->residentialBuildingsList[i]->floors[j]->floor_type_data)->rooms[k];
+                if(rand()%4){
+                    npc* new_npc = (npc*)malloc(sizeof(npc));
+                    if (!new_npc) {
+                        printf("Error allocating memory for NPC.\n");
+                        exit(1);
+                    }
+                    generate_npc(new_npc);
+                    new_npc->placeOfResidence = getFreeResidence(c);
+                    new_npc->placeOfResidence->npcs[0] = new_npc;
+                    new_npc->placeOfResidence->npc_count = 1;
+                    new_npc->currentPlace = new_npc->placeOfResidence;
+                    new_npc->placeOfWork = getFreeWorkplace(c);
+                    if (new_npc->placeOfWork){
+                        new_npc->placeOfWork->employees[new_npc->placeOfWork->employee_count] = new_npc;
+                        new_npc->placeOfWork->employee_count++;
+                    }
                 }
+                else{
+                    npc** family = (npc**)malloc(4 * sizeof(npc*));
+                    int count = rand() % 3 + 2;
+                    if (!family) {
+                        printf("Error allocating memory for family.\n");
+                        exit(1);
+                    }
+                    generate_family(count, family);
+                    
+                    family[0]->placeOfResidence = getFreeResidence(c);
+                    family[0]->placeOfResidence->npcs = family;
+                    family[0]->placeOfResidence->npc_count = count;
+                    for (int l = 0; l < count; l++){
+                        family[l]->currentPlace = family[0]->placeOfResidence;
+                        family[l]->placeOfResidence = family[0]->placeOfResidence;
+                        family[l]->placeOfWork = getFreeWorkplace(c);
+                        if (family[l]->placeOfWork){
+                            family[l]->placeOfWork->employees[family[l]->placeOfWork->employee_count] = family[l];
+                            family[l]->placeOfWork->employee_count++;
+                        }
+                    }
 
-                n->placeOfWork = getFreeWorkplace(c);
-                if (n->placeOfWork){
-                    n->placeOfWork->employees[n->placeOfWork->employee_count] = n;
-                    n->placeOfWork->employee_count += 1;
                 }
             }
         }
@@ -572,6 +612,214 @@ void start(city* c, player* p) {
 
 }
 
+void makeSavefile(city* c, player* p) {
+    FILE* savefile = fopen("savefile.txt", "w");
+    if (!savefile) {
+        printf("Error opening savefile.\n");
+        exit(1);
+    }
+
+    // Сохраняем данные города
+    fprintf(savefile, "CITYDATA\n%s\n%d %d\n%d %d\n%d %d\n",
+        c->name, c->width, c->height, c->residentialBuildings, c->officeBuildings, c->time, c->day);
+
+    // Сохраняем данные игрока
+    fprintf(savefile, "PLAYERDATA\n%d %d\n%d %d\n%d\n%d\n",
+        p->x, p->y, 
+        p->currentBuilding ? p->currentBuilding->x : -1, p->currentBuilding ? p->currentBuilding->y : -1,
+        p->currentFloor ? p->currentFloor->floorNumber : -1,
+        p->currentRoom ? p->currentRoom->room_number : -1);
+
+    // Проходим по всем зданиям, этажам и комнатам за один проход
+    fprintf(savefile, "BUILDINGDATA\n");
+    for (int i = 0; i < c->height; i++) {
+        for (int j = 0; j < c->width; j++) {
+            building* b = c->cityMap[i][j];
+            fprintf(savefile, "%s\n%d %d %d %d\n", b->name, b->x, b->y, b->height, b->building_type);
+
+            // Сохранение этажей
+            for (int k = 0; k < b->height; k++) {
+                floor* f = b->floors[k];
+                fprintf(savefile, "FLOOR %d %d %d %d\n", b->x, b->y, f->floorNumber, f->floor_type);
+
+                if (f->floor_type == RESIDENTIAL) {
+                    residentialFloor* rf = (residentialFloor*)f->floor_type_data;
+                    fprintf(savefile, "ROOMS %d\n", rf->room_count);
+                    
+                    for (int l = 0; l < rf->room_count; l++) {
+                        room* r = rf->rooms[l];
+                        fprintf(savefile, "ROOM %d %d %d %d\n", b->x, b->y, f->floorNumber, r->room_number);
+                        fprintf(savefile, "NPCS %d\n", r->npc_count);
+
+                        // Сохранение NPC
+                        for (int m = 0; m < r->npc_count; m++) {
+                            npc* n = r->npcs[m];
+                            fprintf(savefile, "NPC %s %s\n", n->firstName, n->lastName);
+                            fprintf(savefile, "RESIDENCE %d %d %d %d\n",
+                                n->placeOfResidence->parentFloor->parentBuilding->x,
+                                n->placeOfResidence->parentFloor->parentBuilding->y,
+                                n->placeOfResidence->parentFloor->floorNumber,
+                                n->placeOfResidence->room_number);
+
+                            if (n->placeOfWork) {
+                                fprintf(savefile, "WORK %d %d %d %d\n",
+                                    n->placeOfWork->parentFloor->parentBuilding->x,
+                                    n->placeOfWork->parentFloor->parentBuilding->y,
+                                    n->placeOfWork->parentFloor->floorNumber,
+                                    n->placeOfWork->office_number);
+                            }
+                        }
+                    }
+                } else if (f->floor_type == OFFICE) {
+                    officeFloor* of = (officeFloor*)f->floor_type_data;
+                    fprintf(savefile, "OFFICES %d\n", of->office_count);
+
+                    for (int l = 0; l < of->office_count; l++) {
+                        office* o = of->offices[l];
+                        fprintf(savefile, "OFFICE %d %d %d %s %d\n",
+                            b->x, b->y, f->floorNumber, o->name, o->employee_count);
+                    }
+                }
+            }
+        }
+    }
+
+    fprintf(savefile, "END\n"); // Маркер конца файла
+    fclose(savefile);
+}
+
+void loadSavefile(city* c, player* p) {
+    FILE* savefile = fopen("savefile.txt", "r");
+    if (!savefile) {
+        printf("Error opening savefile.\n");
+        exit(1);
+    }
+
+    char buffer[256];
+    int currentBuildingX, currentBuildingY, currentFloorNum, currentRoomNum;
+
+    // Читаем CITYDATA
+    fscanf(savefile, "%s", buffer);
+    if (strcmp(buffer, "CITYDATA") != 0) {
+        printf("Invalid save file format.\n");
+        fclose(savefile);
+        exit(1);
+    }
+    fscanf(savefile, "%s", c->name);
+    fscanf(savefile, "%d %d", &c->width, &c->height);
+    fscanf(savefile, "%d %d", &c->residentialBuildings, &c->officeBuildings);
+    fscanf(savefile, "%d %d", &c->time, &c->day);
+
+    // Инициализация cityMap
+    c->cityMap = (building***)malloc(c->height * sizeof(building**));
+    for (int i = 0; i < c->height; i++) {
+        c->cityMap[i] = (building**)malloc(c->width * sizeof(building*));
+    }
+
+    // Читаем PLAYERDATA
+    fscanf(savefile, "%s", buffer);
+    if (strcmp(buffer, "PLAYERDATA") != 0) {
+        printf("Invalid save file format.\n");
+        fclose(savefile);
+        exit(1);
+    }
+    fscanf(savefile, "%d %d", &p->x, &p->y);
+    fscanf(savefile, "%d %d", &currentBuildingX, &currentBuildingY);
+    fscanf(savefile, "%d", &currentFloorNum);
+    fscanf(savefile, "%d", &currentRoomNum);
+
+    // Пока игнорируем восстановление currentBuilding, currentFloor, currentRoom
+    p->currentBuilding = NULL;
+    p->currentFloor = NULL;
+    p->currentRoom = NULL;
+
+    // Читаем BUILDINGDATA
+    fscanf(savefile, "%s", buffer);
+    if (strcmp(buffer, "BUILDINGDATA") != 0) {
+        printf("Invalid save file format. Expected BUILDINGDATA.\n");
+        fclose(savefile);
+        exit(1);
+    }
+
+    // Загрузка зданий, этажей и комнат
+    for (int i = 0; i < c->height; i++) {
+        for (int j = 0; j < c->width; j++) {
+            building* b = (building*)malloc(sizeof(building));
+            fscanf(savefile, "%s", b->name);
+            fscanf(savefile, "%d %d %d %d", &b->x, &b->y, &b->height, &b->building_type);
+            b->floors = (floor**)malloc(b->height * sizeof(floor*));
+
+            for (int k = 0; k < b->height; k++) {
+                fscanf(savefile, "%s", buffer);
+                if (strcmp(buffer, "FLOOR") != 0) {
+                    printf("Unexpected token: %s, expected FLOOR\n", buffer);
+                    fclose(savefile);
+                    exit(1);
+                }
+                floor* f = (floor*)malloc(sizeof(floor));
+                fscanf(savefile, "%d %d %d %d", &b->x, &b->y, &f->floorNumber, &f->floor_type);
+
+                if (f->floor_type == RESIDENTIAL) {
+                    residentialFloor* rf = (residentialFloor*)malloc(sizeof(residentialFloor));
+                    fscanf(savefile, "%s %d", buffer, &rf->room_count);
+                    rf->rooms = (room**)malloc(rf->room_count * sizeof(room*));
+
+                    for (int l = 0; l < rf->room_count; l++) {
+                        room* r = (room*)malloc(sizeof(room));
+                        fscanf(savefile, "%s %d %d %d %d", buffer, &b->x, &b->y, &f->floorNumber, &r->room_number);
+                        fscanf(savefile, "%s %d", buffer, &r->npc_count);
+                        r->npcs = (npc**)malloc(r->npc_count * sizeof(npc*));
+
+                        for (int m = 0; m < r->npc_count; m++) {
+                            npc* n = (npc*)malloc(sizeof(npc));
+                            fscanf(savefile, "%s %s", buffer, n->firstName);
+                            fscanf(savefile, "%s", buffer);
+                            fscanf(savefile, "%s %d %d %d %d", buffer,
+                                   &n->placeOfResidence->parentFloor->parentBuilding->x,
+                                   &n->placeOfResidence->parentFloor->parentBuilding->y,
+                                   &n->placeOfResidence->parentFloor->floorNumber,
+                                   &n->placeOfResidence->room_number);
+
+                            if (fscanf(savefile, "%s", buffer) == 1 && strcmp(buffer, "WORK") == 0) {
+                                fscanf(savefile, "%d %d %d %d",
+                                       &n->placeOfWork->parentFloor->parentBuilding->x,
+                                       &n->placeOfWork->parentFloor->parentBuilding->y,
+                                       &n->placeOfWork->parentFloor->floorNumber,
+                                       &n->placeOfWork->office_number);
+                            }
+                            r->npcs[m] = n;
+                        }
+                        rf->rooms[l] = r;
+                    }
+                    f->floor_type_data = rf;
+                } else if (f->floor_type == OFFICE) {
+                    officeFloor* of = (officeFloor*)malloc(sizeof(officeFloor));
+                    fscanf(savefile, "%s %d", buffer, &of->office_count);
+                    of->offices = (office**)malloc(of->office_count * sizeof(office*));
+
+                    for (int l = 0; l < of->office_count; l++) {
+                        office* o = (office*)malloc(sizeof(office));
+                        fscanf(savefile, "%s %d %d %d %s %d", buffer, &b->x, &b->y, &f->floorNumber, o->name, &o->employee_count);
+                        of->offices[l] = o;
+                    }
+                    f->floor_type_data = of;
+                }
+                b->floors[k] = f;
+            }
+            c->cityMap[i][j] = b;
+        }
+    }
+
+    fscanf(savefile, "%s", buffer);
+    if (strcmp(buffer, "END") != 0) {
+        printf("Savefile corrupted. Missing END marker.\n");
+        fclose(savefile);
+        exit(1);
+    }
+
+    fclose(savefile);
+}
+
 void printMap(city* c, player* p) {
     printf("\n\033[36m%s City Map\033[0m\n", c->name); // Cyan city name
     printf("╔");
@@ -626,222 +874,299 @@ void printMap(city* c, player* p) {
     printf("╝\n");
     printf("\n\033[33mLegend:\033[0m ☺=You | ⌂=Home | F=Office | ·=Empty\n\n");
 }
+// Добавим вспомогательные функции для улучшения читаемости
+void printSeparator() {
+    printf("\n\033[35m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n");
+}
 
-void playerControl(city* c, player* p) {
+void clearInputBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
+int safeInput(int min, int max) {
     int choice;
+    while(1) {
+        if(scanf("%d", &choice) == 1) {
+            if(choice >= min && choice <= max) {
+                clearInputBuffer();
+                return choice;
+            }
+        }
+        clearInputBuffer();
+        printf("Invalid input. Please enter a number between %d-%d: ", min, max);
+    }
+}
+
+void handleDialogue(player* p, npc* n) {
+    printf("\n🗨️ \033[1m%s %s\033[0m\n", n->firstName, n->lastName);
+    printf("1. Ask about work\n");
+    printf("2. Ask about family\n");
+    printf("3. Ask about hobbies\n");
+    printf("4. Say goodbye\n» Choice: ");
+    int choice = safeInput(1, 4);
+    clear();
+    switch(choice) {
+        case 1:
+            printf("%s %s says: 'I work at %s.'\n", n->firstName, n->lastName, n->placeOfWork->name);
+            break;
+        case 2:
+            printf("%s %s says: 'I live at %s.'\n", n->firstName, n->lastName, n->placeOfResidence->parentFloor->parentBuilding->name);
+            break;
+        case 3:
+            printf("%s %s says: 'I like to read books.'\n", n->firstName, n->lastName);
+            break;
+        case 4:
+            printf("%s %s says: 'Goodbye!'\n", n->firstName, n->lastName);
+            break;
+    }
+}
+
+// Подфункции для разных состояний игры
+void handleResidentialRoom(player* p) {
+    room* r = p->currentRoom;
+
+    if(r->npc_count > 1){
+        printf("\n👥 \033[1m%s's Room\033[0m\n", r->npcs[0]->lastName);
+        printf("1. Talk to %s's\n", r->npcs[0]->lastName);
+    } else {
+        printf("\n👤 \033[1m%s %s's Room\033[0m\n", r->npcs[0]->firstName, r->npcs[0]->lastName);
+        printf("1. Talk to %s\n", r->npcs[0]->firstName);
+    }
+
+    printf("2. Search the room\n");
+    printf("3. Leave\n» Choice: ");
     
-    if (p->currentBuilding) {
-        printf("\n\033[35m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n");
-        printf("📍 \033[1m%s\033[0m | Floor: %d\n", p->currentBuilding->name, p->currentFloor->floorNumber + 1);
-        printf("\033[35m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n");
-        
-        switch (p->currentFloor->floor_type) {
-            case RESIDENTIAL:
-                if (p->currentRoom) {
-                    if (p->currentRoom->npcs[0]) {
-                        printf("\n👤 \033[1m%s %s's Room\033[0m\n", p->currentRoom->npcs[0]->firstName, p->currentRoom->npcs[0]->lastName);
-                        printf("1. Talk to %s\n", p->currentRoom->npcs[0]->firstName);
-                        printf("2. Search the room\n");
-                        printf("3. Leave\n");
-                        printf("» Choice: ");
-                        scanf("%d", &choice);
-                        clear();
-                        switch (choice) {
-                            case 1:
-                                printf("\n💬 %s says: 'I've lived here since the Great Pixel War!'\n", p->currentRoom->npcs[0]->firstName);
-                                break;
-                            case 2:
-                                printf("\n🔍 You find dusty code snippets and a half-eaten pizza.\n");
-                                break;
-                            case 3:
-                                p->currentRoom = NULL;
-                                break;
-                            default:
-                                printf("Invalid choice.\n");
-                        }
-                    } else {
-                        printf("\n🚪 Empty Room\n1. Leave\n» Choice: ");
-                        scanf("%d", &choice);
-                        clear();
-                        if (choice == 1) p->currentRoom = NULL;
-                    }
-                } else {
-                    printf("\n🏠 Floor Menu:\n");
-                    printf("1. Enter a room (1-4)\n");
-                    printf("2. Exit building\n");
-                    printf("3. Switch floor\n");
-                    printf("» Choice: ");
-                    scanf("%d", &choice);
-                    clear();
-
-                    switch (choice) {
-                        case 1:
-                            printf("Enter room number: ");
-                            scanf("%d", &choice);
-                            clear();
-                            if (choice >= 1 && choice <= 4) {
-                                residentialFloor* resFloor = (residentialFloor*)p->currentFloor->floor_type_data;
-                                if (resFloor) {
-                                    p->currentRoom = resFloor->rooms[choice - 1];
-                                } else {
-                                    printf("Invalid floor data.\n\n");
-                                }
-                            } else {
-                                printf("Invalid room number.\n\n");
-                            }
-                            break;
-                        case 2:
-                            p->currentFloor = NULL;
-                            p->currentBuilding = NULL;
-                            break;
-                        case 3:
-                            printf("Choose a floor (1-%d):\n", p->currentBuilding->height);
-                            for (int i = 0; i < p->currentBuilding->height; i++) {
-                                printf("%d. Floor %d\n", i + 1, i + 1);
-                            }
-                            printf("Your choice: ");
-                            scanf("%d", &choice);
-                            clear();
-                            if (choice >= 1 && choice <= p->currentBuilding->height) {
-                                p->currentFloor = p->currentBuilding->floors[choice - 1];
-                            } else {
-                                printf("Invalid floor number.\n\n");
-                            }
-                            break;
-                        default:
-                            printf("Invalid choice.\n\n");
-                            break;
-                    }
+    int choice = safeInput(1, 3);
+    clear();
+    
+    switch(choice) {
+        case 1:
+            if (r->npc_count == 1) {
+                handleDialogue(p, r->npcs[0]);
+            } else {
+                for (int i = 0; i < r->npc_count; i++) {
+                    printf("%d. Talk to %s %s\n", i + 1, r->npcs[i]->firstName, r->npcs[i]->lastName);
                 }
-                break;
-
-            case OFFICE:
-                printf("\n🏢 Office Floor\n");
-                printf("1. Exit building\n");
-                printf("2. List companies\n");
-                printf("3. Switch floor\n");
-                printf("» Choice: ");
-                scanf("%d", &choice);
-                 clear();
-                switch (choice) {
-                    case 1:
-                        p->currentFloor = NULL;
-                        p->currentBuilding = NULL;
-                        break;
-                    case 2:
-                        officeFloor* officeFlr = (officeFloor*)p->currentFloor->floor_type_data;
-                        if (officeFlr) {
-                            printf("Choose an office:\n");
-                            for (int i = 0; i < officeFlr->office_count; i++) {
-                                printf("%d. %s\n", i + 1, officeFlr->offices[i]->name);
-                            }
-                            printf("Your choice: ");
-                            scanf("%d", &choice);
-                            if (choice >= 1 && choice <= officeFlr->office_count) {
-                                office* o = officeFlr->offices[choice - 1];
-                                printf("Employees of %s:\n", o->name);
-                                for (int i = 0; i < o->employee_count; i++) {
-                                    printf("%d. %s %s\n", i + 1, o->employees[i]->firstName, o->employees[i]->lastName);
-                                }
-                                printf("Choose an employee:\n");
-                                printf("Your choice: ");
-                                scanf("%d", &choice);
-                                if (choice >= 1 && choice <= o->employee_count) {
-                                    npc* n = o->employees[choice - 1];
-                                    printf("You are talking to %s %s.\n", n->firstName, n->lastName);
-                                    printf("1. Talk to %s %s\n", n->firstName, n->lastName);
-                                    printf("2. Leave the office\n");
-                                    printf("Your choice: ");
-                                    scanf("%d", &choice);
-                                    if (choice == 1) {
-                                        printf("%s %s says: 'Hello! Welcome to my office.'\n", n->firstName, n->lastName);
-                                    }
-                                } else {
-                                    printf("Invalid employee number.\n");
-                                }
-                            } else {
-                                printf("Invalid office number.\n");
-                            }
-                        }
-                        break;
-                    case 3:
-                        printf("Choose a floor (0-%d):\n", p->currentBuilding->height - 1);
-                        for (int i = 0; i < p->currentBuilding->height; i++) {
-                            printf("%d. Floor %d\n", i, i);
-                        }
-                        printf("Your choice: ");
-                        scanf("%d", &choice);
-                        if (choice >= 0 && choice < p->currentBuilding->height) {
-                            p->currentFloor = p->currentBuilding->floors[choice];
-                        } else {
-                            printf("Invalid floor number.\n");
-                        }
-                        break;
-                    default:
-                        printf("Invalid choice.\n");
-                        break;
+                printf("%d. Leave\n» Choice: ", r->npc_count + 1);
+                int npcChoice = safeInput(1, r->npc_count + 1);
+                clear();
+                if (npcChoice == r->npc_count + 1) {
+                    break;
                 }
-                break;
+                handleDialogue(p, r->npcs[npcChoice - 1]);
+            }
+            break;
+        case 2:
+            printf("\n🔍 You find dusty code snippets and a half-eaten pizza.\n");
+            break;
+        case 3:
+            p->currentRoom = NULL;
+            break;
+    }
+} 
+
+void handleEmptyRoom(player* p){
+    printf("\n🚪 Empty Room\n");
+    printf("1. Search the room\n");
+    printf("2. Leave\n» Choice: ");
+    int choice = safeInput(1, 2);
+    clear();
+
+    switch(choice) {
+        case 1:
+            printf("\n🔍 You find nothing but dust and a flickering light.\n");
+            break;
+        case 2:
+            p->currentRoom = NULL;
+            break;
+    }
+}
+
+void handleResidentialFloor(player* p) {
+    printf("\n🏠 Floor Menu:\n");
+    printf("1. Enter a room (1-4)\n");
+    printf("2. Exit building\n");
+    printf("3. Switch floor\n» Choice: ");
+    
+    int choice = safeInput(1, 3);
+    clear();
+    
+    switch(choice) {
+        case 1: {
+            printf("Enter room number: ");
+            int roomChoice = safeInput(1, 4);
+            residentialFloor* resFloor = (residentialFloor*)p->currentFloor->floor_type_data;
+            
+            if(resFloor) {
+                p->currentRoom = resFloor->rooms[roomChoice - 1];
+            } else {
+                printf("Invalid floor data.\n");
+            }
+            break;
+        }
+        case 2:
+            p->currentFloor = NULL;
+            p->currentBuilding = NULL;
+            break;
+        case 3: {
+            printf("Choose a floor (1-%d):\n", p->currentBuilding->height);
+            for(int i = 0; i < p->currentBuilding->height; i++) {
+                printf("%d. Floor %d\n", i + 1, i + 1);
+            }
+            int floorChoice = safeInput(1, p->currentBuilding->height);
+            p->currentFloor = p->currentBuilding->floors[floorChoice - 1];
+            break;
+        }
+    }
+}
+
+void handleOfficeFloor(player* p) {
+    printf("\n🏢 Office Floor\n");
+    printf("1. Exit building\n");
+    printf("2. List companies\n");
+    printf("3. Switch floor\n» Choice: ");
+    
+    int choice = safeInput(1, 3);
+    clear();
+    
+    switch(choice) {
+        case 1:
+            p->currentFloor = NULL;
+            p->currentBuilding = NULL;
+            break;
+        case 2: {
+            officeFloor* officeFlr = (officeFloor*)p->currentFloor->floor_type_data;
+            if(!officeFlr) break;
+
+            printf("Choose an office:\n");
+            for(int i = 0; i < officeFlr->office_count; i++) {
+                printf("%d. %s\n", i + 1, officeFlr->offices[i]->name);
+            }
+            int officeChoice = safeInput(1, officeFlr->office_count);
+            office* o = officeFlr->offices[officeChoice - 1];
+
+            printf("Employees of %s:\n", o->name);
+            for(int i = 0; i < o->employee_count; i++) {
+                printf("%d. %s %s\n", i + 1, o->employees[i]->firstName, o->employees[i]->lastName);
+            }
+            int empChoice = safeInput(1, o->employee_count);
+            npc* n = o->employees[empChoice - 1];
+
+            printf("1. Talk to %s %s\n", n->firstName, n->lastName);
+            printf("2. Leave\n» Choice: ");
+            int action = safeInput(1, 2);
+            
+            if(action == 1) {
+                printf("%s %s says: 'Hello! Welcome to my office.'\n", 
+                      n->firstName, n->lastName);
+            }
+            break;
+        }
+        case 3: {
+            printf("Choose a floor (1-%d):\n", p->currentBuilding->height);
+            for(int i = 0; i < p->currentBuilding->height; i++) {
+                printf("%d. Floor %d\n", i + 1, i + 1);
+            }
+            int floorChoice = safeInput(1, p->currentBuilding->height);
+            p->currentFloor = p->currentBuilding->floors[floorChoice - 1];
+            break;
+        }
+    }
+}
+
+void handleBuildingInteraction(city* c, player* p) {
+    printSeparator();
+    printf("📍 \033[1m%s\033[0m | Floor: %d\n", 
+          p->currentBuilding->name, 
+          p->currentFloor->floorNumber + 1);
+    printSeparator();
+
+    if(p->currentRoom) {
+        printf("%d", p->currentRoom->npc_count);
+        if (p->currentRoom->npc_count > 0) {
+            handleResidentialRoom(p);
+        } else {
+            handleEmptyRoom(p);
         }
     } else {
-        printf("\n\033[35m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n");
-        printf("🌆 You're at \033[1m%s\033[0m\n", c->cityMap[p->x][p->y]->name);
-        printf("\033[35m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n");
-        printf("1. Enter building\n");
-        printf("2. Move\n");
-        printf("3. View map\n");
-        printf("» Choice: ");
-        scanf("%d", &choice);
-        switch (choice) {
-            case 1:
-                if (c->cityMap[p->x][p->y]) {
-                    p->currentBuilding = c->cityMap[p->x][p->y];
-                    p->currentFloor = p->currentBuilding->floors[rand() % p->currentBuilding->height];
-                } else {
-                    printf("There is no building here.\n");
-                }
+        switch(p->currentFloor->floor_type) {
+            case RESIDENTIAL:
+                handleResidentialFloor(p);
                 break;
-            case 2:
-                printf("1. North 🡹\n2. South 🡻\n3. West 🡸\n4. East 🡺\n» ");
-                scanf("%d", &choice);
-                switch (choice) {
-                    case 1:
-                        if (p->x > 0) {
-                            p->x--;
-                        } else {
-                            printf("You are at the top of the city.\n");
-                        }
-                        break;
-                    case 2:
-                        if (p->x < c->height - 1) {
-                            p->x++;
-                        } else {
-                            printf("You are at the bottom of the city.\n");
-                        }
-                        break;
-                    case 3: 
-                        if (p->y > 0) {
-                            p->y--;
-                        } else {
-                            printf("You are at the left edge of the city.\n");
-                        }
-                        break;
-                    case 4:
-                        if (p->y < c->width - 1) {
-                            p->y++;
-                        } else {
-                            printf("You are at the right edge of the city.\n");
-                        }
-                        break;
-                    }
-                break;
-            case 3:
-                printMap(c, p);
+            case OFFICE:
+                handleOfficeFloor(p);
                 break;
         }
     }
 }
 
+void handleMapMovement(city* c, player* p) {
+    printf("1. North 🡹\n2. South 🡻\n3. West 🡸\n4. East 🡺\n» ");
+    int dir = safeInput(1, 4);
+    
+    switch(dir) {
+        case 1:
+            if(p->x > 0) p->x--;
+            else printf("You're at the city's northern edge!\n");
+            break;
+        case 2:
+            if(p->x < c->height - 1) p->x++;
+            else printf("You're at the city's southern edge!\n");
+            break;
+        case 3: 
+            if(p->y > 0) p->y--;
+            else printf("You're at the city's western edge!\n");
+            break;
+        case 4:
+            if(p->y < c->width - 1) p->y++;
+            else printf("You're at the city's eastern edge!\n");
+            break;
+    }
+}
+
+void handleOutsideInteraction(city* c, player* p) {
+    printSeparator();
+    printf("🌆 You're at \033[1m%s\033[0m\n", c->cityMap[p->x][p->y]->name);
+    printSeparator();
+    
+    printf("1. Enter building\n");
+    printf("2. Move\n");
+    printf("3. View map\n»");
+    printf("4. Save\n» Choice: ");
+    
+    int choice = safeInput(1, 4);
+    clear();
+    
+    switch(choice) {
+        case 1:
+            if(c->cityMap[p->x][p->y]) {
+                p->currentBuilding = c->cityMap[p->x][p->y];
+                p->currentFloor = p->currentBuilding->floors[0]; // Start at ground floor
+            } else {
+                printf("There is no building here.\n");
+            }
+            break;
+        case 2:
+            handleMapMovement(c, p);
+            break;
+        case 3:
+            printMap(c, p);
+            break;
+        case 4:
+            makeSavefile(c, p);
+            break;
+    }
+}
+
+// Основная функция
+void playerControl(city* c, player* p) {
+    if(p->currentBuilding) {
+        handleBuildingInteraction(c, p);
+    } else {
+        handleOutsideInteraction(c, p);
+    }
+}
 void freeCity(city* c) {
     if (!c) return;
 
@@ -952,10 +1277,22 @@ int main(int argc, char *argv[]){
     }*/
     clear();
     srand(time(NULL));
-    //srand(THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING);
+    srand(THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING);
     city c;
     player p;
-    start(&c, &p);
+
+    printf("1: New city");
+    printf("2: Load save");
+    int choice;
+    printf("\nChoose an option: ");
+    scanf("%d", &choice);
+    clear();
+    if (choice == 2) {
+        loadSavefile(&c, &p);
+    } else {
+        start(&c, &p);
+    }
+
     while (1) {
         playerControl(&c, &p);
     }
