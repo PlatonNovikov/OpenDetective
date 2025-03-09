@@ -1,6 +1,7 @@
 #include "structures.h"
 #include <stdio.h>
 #include "ui.h"
+#include "saveload.h"
 
 void printMap(city* c, player* p) {
     printf("\n\033[36m%s City Map\033[0m\n", c->name); // Cyan city name

@@ -1,29 +1,5 @@
-#ifndef STRUCTURES_H
-#define STRUCTURES_H
-
-#define PREFIX_COUNT 50
-#define BASE_COUNT 50
-#define SUFFIX_COUNT 50
-#define ARRAY_SIZE 100
-#define FIRST_HALF_COMPANY 50
-#define SECOND_HALF_COMPANY 50
-#define MAX_RELATIONSHIPS 100
-#define THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
-#define clear() printf("\033[H\033[J")
-
-extern const char first_names[ARRAY_SIZE][50];
-
-extern const char last_names[ARRAY_SIZE][50];
-
-extern const char *prefixes[PREFIX_COUNT];
-
-extern const char *bases[BASE_COUNT];
-
-extern const char *suffixes[SUFFIX_COUNT];
-
-extern const char *first_half[FIRST_HALF_COMPANY];
-
-extern const char *second_half[SECOND_HALF_COMPANY];
+#ifndef TYPES_H
+#define TYPES_H
 
 typedef enum type {
     RESIDENTIAL, // Жилой этаж
