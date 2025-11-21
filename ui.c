@@ -91,7 +91,12 @@ void handleDialogue(player* p, npc* n) {
     clear();
     switch(choice) {
         case 1:
-            printf("%s %s says: 'I work at %s.'\n", n->firstName, n->lastName, n->placeOfWork->name);
+            if(n->placeOfWork){
+                printf("%s %s says: 'I work at %s.'\n", n->firstName, n->lastName, n->placeOfWork->name);
+            }
+            else{
+                printf("%s %s says: 'I don't work'\n", n->firstName, n->lastName);
+            }
             break;
         case 2:
             printf("%s %s says: 'I live at %s.'\n", n->firstName, n->lastName, n->placeOfResidence->parentFloor->parentBuilding->name);
@@ -179,7 +184,7 @@ void handleResidentialFloor(player* p) {
         case 1: {
             printf("Enter room number: ");
             int roomChoice = safeInput(1, 4);
-            residentialFloor* resFloor = (residentialFloor*)p->currentFloor->floor_type_data;
+            residentialFloor* resFloor = p->currentFloor->floorTypeData.residentialFloorData;
             
             if(resFloor) {
                 p->currentRoom = resFloor->rooms[roomChoice - 1];
@@ -219,7 +224,7 @@ void handleOfficeFloor(player* p) {
             p->currentBuilding = NULL;
             break;
         case 2: {
-            officeFloor* officeFlr = (officeFloor*)p->currentFloor->floor_type_data;
+            officeFloor* officeFlr = p->currentFloor->floorTypeData.officeFloorData;
             if(!officeFlr) break;
 
             printf("Choose an office:\n");
@@ -273,7 +278,7 @@ void handleBuildingInteraction(city* c, player* p) {
             handleEmptyRoom(p);
         }
     } else {
-        switch(p->currentFloor->floor_type) {
+        switch(p->currentFloor->floorType) {
             case RESIDENTIAL:
                 handleResidentialFloor(p);
                 break;
@@ -315,7 +320,7 @@ void handleOutsideInteraction(city* c, player* p) {
     
     printf("1. Enter building\n");
     printf("2. Move\n");
-    printf("3. View map\n»");
+    printf("3. View map\n");
     printf("4. Save\n» Choice: ");
     
     int choice = safeInput(1, 4);
@@ -337,7 +342,8 @@ void handleOutsideInteraction(city* c, player* p) {
             printMap(c, p);
             break;
         case 4:
-            makeSavefile(c, p);
+            printf("sry, work in progress.");
+            //makeSavefile(c, p);
             break;
     }
 }

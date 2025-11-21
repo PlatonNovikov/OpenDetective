@@ -7,7 +7,6 @@
 #define ARRAY_SIZE 100
 #define FIRST_HALF_COMPANY 50
 #define SECOND_HALF_COMPANY 50
-#define MAX_RELATIONSHIPS 100
 #define THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
 #define clear() printf("\033[H\033[J")
 
@@ -31,12 +30,6 @@ typedef enum type {
     OFFICE  // Промышленный этаж
 } type;
 
-typedef enum relationship_type {
-    FAMILY,
-    FRIEND,
-    COWORKER,
-} relationship_type;
-
 // Forward declaration of npc struct
 typedef struct npc npc;
 typedef struct room room;
@@ -47,23 +40,6 @@ typedef struct floor floor;
 typedef struct building building;
 typedef struct city city;
 typedef struct player player;
-
-typedef struct relationship {
-    npc* target;                // Pointer to the related NPC
-    relationship_type type;     // Type of relationship
-    int strength;               // 0-100 (e.g., closeness, trust)
-    int count;                  // Number of interactions
-} relationship;
-
-typedef struct npc {
-    char firstName[100];
-    char lastName[100];
-    room* placeOfResidence;
-    office* placeOfWork;
-    void* currentPlace;
-    relationship* relationships; // Dynamic array of relationships
-    int relationshipCount;
-} npc;
 
 typedef struct room {
     npc** npcs;          // Array of NPC pointers
@@ -94,8 +70,11 @@ typedef struct officeFloor{
 
 typedef struct floor {
     int floorNumber;
-    type floor_type;
-    void* floor_type_data;
+    union {
+        officeFloor* officeFloorData;
+        residentialFloor* residentialFloorData;
+    } floorTypeData;
+    type floorType;
     building* parentBuilding;
 } floor;
 
@@ -107,18 +86,6 @@ typedef struct building {
     city* parentCity;
     type building_type;
 } building;
-
-typedef struct city {
-    char name[100];
-    int width, height;
-    building*** cityMap;
-    building** residentialBuildingsList;
-    building** officeBuildingsList;
-    int residentialBuildings;
-    int officeBuildings;
-    int time;  // 0-23 (часы)
-    int day;   // Дни с начала игры
-} city;
 
 typedef struct player {
     int x;

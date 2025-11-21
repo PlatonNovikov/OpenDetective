@@ -9,8 +9,8 @@ char* generateCompanyName() {
     static char companyName[100];
 
     // Генерация случайных индексов для двух частей
-    int firstPartIndex = rand()%FIRST_HALF_COMPANY;
-    int secondPartIndex = rand()%SECOND_HALF_COMPANY;
+    int firstPartIndex = rand() % FIRST_HALF_COMPANY;
+    int secondPartIndex = rand() % SECOND_HALF_COMPANY;
 
     // Формирование полного названия
     snprintf(companyName, sizeof(companyName), "%s %s", first_half[firstPartIndex], second_half[secondPartIndex]);
