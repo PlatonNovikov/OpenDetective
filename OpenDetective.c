@@ -47,21 +47,21 @@ void start(city* c, player* p) {
     clear();
     printf("Generating...\n");
 
-    c->cityMap = (building***)malloc(c->height * sizeof(building**));
+    c->cityMap = (building***)calloc(c->height, sizeof(building**));
     if (!c->cityMap) {
         printf("Error allocating memory for city map.\n");
         exit(1);
     }
 
     for (int i = 0; i < c->height; i++) {
-        c->cityMap[i] = (building**)malloc(c->width * sizeof(building*));
+        c->cityMap[i] = (building**)calloc(c->width, sizeof(building*));
         if (!c->cityMap[i]) {
             printf("Error allocating memory for city map row.\n");
             exit(1);
         }
 
         for (int j = 0; j < c->width; j++) {
-            building* b = (building*)malloc(sizeof(building));
+            building* b = (building*)calloc(1, sizeof(building));
             if (!b) {
                 printf("Error allocating memory for building.\n");
                 exit(1);
@@ -98,12 +98,12 @@ void start(city* c, player* p) {
             }
         }
     }
-    c->residentialBuildingsList = (building**)malloc(c->residentialBuildings * sizeof(building*));
+    c->residentialBuildingsList = (building**)calloc(c->residentialBuildings, sizeof(building*));
     if (!c->residentialBuildingsList) {
         printf("Error allocating memory for residential buildings.\n");
         exit(1);
     }
-    c->officeBuildingsList = (building**)malloc(c->officeBuildings * sizeof(building*));
+    c->officeBuildingsList = (building**)calloc(c->officeBuildings, sizeof(building*));
     if (!c->officeBuildingsList) {
         printf("Error allocating memory for office buildings.\n");
         exit(1);
@@ -134,7 +134,7 @@ void start(city* c, player* p) {
             }
         }
     }
-    c->npcList = (npc**)malloc(MAX_NPC * sizeof(npc*));
+    c->npcList = (npc**)calloc(MAX_NPC, sizeof(npc*));
     c->npcListCount = 0;
     populateCity(c);
     p->x = rand() % c->height;
@@ -252,16 +252,17 @@ void openCMD(){
 
 int main(int argc, char *argv[]){
 
-    // if (argc < 2 || strcmp(argv[1], "--child") != 0) {
-    //     openCMD();  // Открываем новый терминал
-    //     return 0;   // Завершаем текущий процесс, чтобы избежать дублирования
-    // }
+    if (argc < 2 || strcmp(argv[1], "--child") != 0) {
+        openCMD();  // Открываем новый терминал
+        return 0;   // Завершаем текущий процесс, чтобы избежать дублирования
+    }
     clear();
     srand(time(NULL));
     //srand(THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING); //debug
     city c;
     player p;
 
+    clear();
     printf("1: New city\n");
     printf("2: Load save");
     int choice;

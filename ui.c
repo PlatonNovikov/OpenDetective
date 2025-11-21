@@ -20,13 +20,13 @@ void printMap(city* c, player* p) {
                 printf("\033[1;31m☺\033[0m"); // Bold red player
             } else if (c->cityMap[i][j]) {
                 switch (c->cityMap[i][j]->building_type) {
-                    case RESIDENTIAL: 
+                    case RESIDENTIAL:
                         printf("\033[32m⌂\033[0m"); // Green house
                         break;
-                    case OFFICE: 
+                    case OFFICE:
                         printf("\033[34mF\033[0m"); // Blue office
                         break;
-                    default: 
+                    default:
                         printf("?");
                         break;
                 }
@@ -124,10 +124,10 @@ void handleResidentialRoom(player* p) {
 
     printf("2. Search the room\n");
     printf("3. Leave\n» Choice: ");
-    
+
     int choice = safeInput(1, 3);
     clear();
-    
+
     switch(choice) {
         case 1:
             if (r->npc_count == 1) {
@@ -152,7 +152,7 @@ void handleResidentialRoom(player* p) {
             p->currentRoom = NULL;
             break;
     }
-} 
+}
 
 void handleEmptyRoom(player* p){
     printf("\n🚪 Empty Room\n");
@@ -176,16 +176,16 @@ void handleResidentialFloor(player* p) {
     printf("1. Enter a room (1-4)\n");
     printf("2. Exit building\n");
     printf("3. Switch floor\n» Choice: ");
-    
+
     int choice = safeInput(1, 3);
     clear();
-    
+
     switch(choice) {
         case 1: {
             printf("Enter room number: ");
             int roomChoice = safeInput(1, 4);
             residentialFloor* resFloor = p->currentFloor->floorTypeData.residentialFloorData;
-            
+
             if(resFloor) {
                 p->currentRoom = resFloor->rooms[roomChoice - 1];
             } else {
@@ -214,10 +214,10 @@ void handleOfficeFloor(player* p) {
     printf("1. Exit building\n");
     printf("2. List companies\n");
     printf("3. Switch floor\n» Choice: ");
-    
+
     int choice = safeInput(1, 3);
     clear();
-    
+
     switch(choice) {
         case 1:
             p->currentFloor = NULL;
@@ -244,9 +244,9 @@ void handleOfficeFloor(player* p) {
             printf("1. Talk to %s %s\n", n->firstName, n->lastName);
             printf("2. Leave\n» Choice: ");
             int action = safeInput(1, 2);
-            
+
             if(action == 1) {
-                printf("%s %s says: 'Hello! Welcome to my office.'\n", 
+                printf("%s %s says: 'Hello! Welcome to my office.'\n",
                       n->firstName, n->lastName);
             }
             break;
@@ -265,8 +265,8 @@ void handleOfficeFloor(player* p) {
 
 void handleBuildingInteraction(city* c, player* p) {
     printSeparator();
-    printf("📍 \033[1m%s\033[0m | Floor: %d\n", 
-          p->currentBuilding->name, 
+    printf("📍 \033[1m%s\033[0m | Floor: %d\n",
+          p->currentBuilding->name,
           p->currentFloor->floorNumber + 1);
     printSeparator();
 
@@ -292,7 +292,7 @@ void handleBuildingInteraction(city* c, player* p) {
 void handleMapMovement(city* c, player* p) {
     printf("1. North 🡹\n2. South 🡻\n3. West 🡸\n4. East 🡺\n» ");
     int dir = safeInput(1, 4);
-    
+
     switch(dir) {
         case 1:
             if(p->x > 0) p->x--;
@@ -302,7 +302,7 @@ void handleMapMovement(city* c, player* p) {
             if(p->x < c->height - 1) p->x++;
             else printf("You're at the city's southern edge!\n");
             break;
-        case 3: 
+        case 3:
             if(p->y > 0) p->y--;
             else printf("You're at the city's western edge!\n");
             break;
@@ -317,15 +317,16 @@ void handleOutsideInteraction(city* c, player* p) {
     printSeparator();
     printf("🌆 You're at \033[1m%s\033[0m\n", c->cityMap[p->x][p->y]->name);
     printSeparator();
-    
+
     printf("1. Enter building\n");
     printf("2. Move\n");
     printf("3. View map\n");
+    // printf("4. Spend time\n");
     printf("4. Save\n» Choice: ");
-    
+
     int choice = safeInput(1, 4);
     clear();
-    
+
     switch(choice) {
         case 1:
             if(c->cityMap[p->x][p->y]) {
@@ -341,6 +342,12 @@ void handleOutsideInteraction(city* c, player* p) {
         case 3:
             printMap(c, p);
             break;
+        // case 4:
+        //     printf("Enter hours to spend (1-12): ");
+        //     int hours = safeInput(1, 12);
+        //     c->addTime(c, hours);
+        //     printf("You spent %d hours. Current time: %02d:00, Day %d\n", hours, c->time, c->day);
+        //     break;
         case 4:
             printf("sry, work in progress.");
             //makeSavefile(c, p);

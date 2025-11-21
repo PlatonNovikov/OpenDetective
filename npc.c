@@ -7,7 +7,7 @@
 void generate_npc(npc* new_npc, city* c) {
     snprintf(new_npc->firstName, sizeof(new_npc->firstName), "%s", first_names[rand() % ARRAY_SIZE]);
     snprintf(new_npc->lastName, sizeof(new_npc->lastName), "%s", last_names[rand() % ARRAY_SIZE]);
-    new_npc->relationships = (relationship*)malloc(MAX_RELATIONSHIPS * sizeof(relationship));
+    new_npc->relationships = (relationship*)calloc(MAX_RELATIONSHIPS, sizeof(relationship));
     if (!new_npc->relationships) {
         printf("Error allocating memory for relationships.\n");
         free(new_npc);
@@ -24,7 +24,7 @@ void generate_family(int count, npc** family, city* c) {
         exit(1);
     }
     for (int i = 0; i < count; i++){
-        family[i] = (npc*)malloc(sizeof(npc));
+        family[i] = (npc*)calloc(1, sizeof(npc));
         if (!family[i]) {
             printf("Error allocating memory for NPC.\n");
             exit(1);

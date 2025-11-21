@@ -7,6 +7,7 @@
 #define ARRAY_SIZE 100
 #define FIRST_HALF_COMPANY 50
 #define SECOND_HALF_COMPANY 50
+#define MAX_NPC_PER_ROOM 10
 #define THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
 #define clear() printf("\033[H\033[J")
 
@@ -43,6 +44,7 @@ typedef struct player player;
 
 typedef struct room {
     npc** npcs;          // Array of NPC pointers
+    npc** current_npcs; // Currently present NPCs
     int npc_count;
     int room_number;
     floor* parentFloor;

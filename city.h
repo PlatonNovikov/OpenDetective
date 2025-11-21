@@ -21,6 +21,7 @@ typedef struct city {
 
     int time;  // 0-23 (часы)
     int day;   // Дни с начала игры
+    void (*addTime)(city* c, int hours);
 } city;
 
 void allocateFloors(building* b);
