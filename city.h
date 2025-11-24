@@ -6,22 +6,22 @@
 #define MAX_NPC 10000
 
 typedef struct city {
-    char name[100];
-    int width, height;
+	char		name[100];
+	int			width, height;
 
-    building*** cityMap;
-    building** residentialBuildingsList;
-    building** officeBuildingsList;
+	building	***cityMap;
+	building	**residentialBuildingsList;
+	building	**officeBuildingsList;
 
-    int residentialBuildings;
-    int officeBuildings;
+	int			residentialBuildings;
+	int			officeBuildings;
 
-    npc** npcList;
-    int npcListCount;
+	npc			**npcList;
+	int			npcListCount;
 
-    int time;  // 0-23 (часы)
-    int day;   // Дни с начала игры
-    void (*addTime)(city* c, int hours);
+	int			time;  // 0-23 (часы)
+	int			day;   // Дни с начала игры
+	void		(*addTime)(city* c, int hours);
 } city;
 
 void allocateFloors(building* b);
@@ -32,5 +32,6 @@ office* getFreeWorkplace(city* c);
 
 void populateCity(city* c);
 
-void timeManager(city* c);
+void addTime(city* c, int hours);
+
 #endif
