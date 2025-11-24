@@ -260,6 +260,8 @@ void populateCity(city* c){
 						family[l]->placeOfResidence = family[0]->placeOfResidence;
 						family[l]->placeOfWork = getFreeWorkplace(c);
 						family[l]->currentRoom = r;
+						family[l]->currentFloor = family[l]->placeOfResidence->parentFloor;
+						family[l]->currentBuilding = family[l]->placeOfResidence->parentFloor->parentBuilding;
 						if (family[l]->placeOfWork){
 							family[l]->placeOfWork->employees[family[l]->placeOfWork->employee_count] = family[l];
 							family[l]->placeOfWork->employee_count++;
@@ -274,9 +276,11 @@ void populateCity(city* c){
 
 void timeManager(city* c)
 {
-	for (int i = 0; i  < c->npcListCount; i++)
+	npc *n = NULL;
+
+	for (int i = 0; i < c->npcListCount; i++)
 	{
-		npc* n = c->npcList[i];
+		n = c->npcList[i];
 		n->tick(n, c);
 	}
 }

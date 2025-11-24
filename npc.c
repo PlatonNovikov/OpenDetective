@@ -59,7 +59,7 @@ void generate_family(int count, npc** family, city* c) {
 }
 
 void gotoWork(npc* n){
-	if(!n->placeOfWork){
+	if(!n->placeOfWork || n->currentOffice == n->placeOfWork){
 		return;
 	}
 
@@ -113,7 +113,7 @@ void gotoWork(npc* n){
 
 void gotoHone(npc *n)
 {
-	if(!n->placeOfResidence){
+	if(!n->placeOfResidence || (n->placeOfResidence == n->currentRoom)){
 		return;
 	}
 

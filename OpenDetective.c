@@ -150,7 +150,7 @@ void start(city* c, player* p) {
 	p->x = rand() % c->height;
 	p->y = rand() % c->width;
 	player_building_spawn(c, p);
-	p->currentBuilding = c->cityMap[p->x][p->y];
+	// p->currentBuilding = c->cityMap[p->x][p->y];
 	p->currentFloor = p->currentBuilding->floors[rand() % p->currentBuilding->height];
 	p->currentRoom = p->currentFloor->floorTypeData.residentialFloorData->rooms[rand() % 4];
 	p->currentOffice = NULL;
@@ -268,8 +268,8 @@ int main(int argc, char *argv[])
 	// 	return 0;   // Завершаем текущий процесс, чтобы избежать дублирования
 	// }
 	clear();
-	srand(time(NULL));
-	//srand(THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING); //debug
+	// srand(time(NULL));
+	srand(THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING); //debug
 
 	city c;
 	player p;
