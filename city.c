@@ -230,9 +230,9 @@ void populateCity(city* c){
 					new_npc->x = new_npc->placeOfResidence->parentFloor->parentBuilding->x;
 					new_npc->y = new_npc->placeOfResidence->parentFloor->parentBuilding->y;
 					new_npc->placeOfWork = getFreeWorkplace(c);
-					new_npc->currentRoom = r;
-					new_npc->currentFloor = r->parentFloor;
-					new_npc->currentBuilding = r->parentFloor->parentBuilding;
+					new_npc->currentRoom = new_npc->placeOfResidence;
+					new_npc->currentFloor = new_npc->placeOfResidence->parentFloor;
+					new_npc->currentBuilding = new_npc->placeOfResidence->parentFloor->parentBuilding;
 					add_npc(new_npc, r->current_npcs);
 					if (new_npc->placeOfWork){
 						new_npc->placeOfWork->employees[new_npc->placeOfWork->employee_count] = new_npc;
