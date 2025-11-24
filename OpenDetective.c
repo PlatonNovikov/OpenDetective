@@ -153,6 +153,7 @@ void start(city* c, player* p) {
 	p->currentBuilding = c->cityMap[p->x][p->y];
 	p->currentFloor = p->currentBuilding->floors[rand() % p->currentBuilding->height];
 	p->currentRoom = p->currentFloor->floorTypeData.residentialFloorData->rooms[rand() % 4];
+	p->currentOffice = NULL;
 
 	//printf("City generated successfully!\n\n");
 }

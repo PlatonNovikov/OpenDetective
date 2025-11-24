@@ -98,6 +98,7 @@ typedef struct player {
 	building	*currentBuilding;
 	floor		*currentFloor;
 	room		*currentRoom;
+	office		*currentOffice;
 	char		name[100];
 } player;
 

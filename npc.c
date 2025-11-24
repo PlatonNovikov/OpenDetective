@@ -70,7 +70,7 @@ void gotoWork(npc* n){
 		n->currentRoom = NULL;
 		return ;
 	}
-	if (n->currentFloor)
+	if (n->currentFloor && (n->currentBuilding != n->placeOfWork->parentFloor->parentBuilding))
 	{
 		add_npc(n, n->currentFloor->parentBuilding->current_npcs);
 		remove_npc(n, n->currentFloor->current_npcs);
@@ -111,6 +111,60 @@ void gotoWork(npc* n){
 	}
 }
 
+void gotoHone(npc *n)
+{
+	if(!n->placeOfResidence){
+		return;
+	}
+
+	if (n->currentOffice)
+	{
+		add_npc(n, n->currentOffice->parentFloor->current_npcs);
+		remove_npc(n, n->currentOffice->current_npcs);
+		n->currentOffice = NULL;
+		return ;
+	}
+	if (n->currentFloor && (n->currentBuilding != n->placeOfResidence->parentFloor->parentBuilding))
+	{
+		add_npc(n, n->currentBuilding->current_npcs);
+		remove_npc(n, n->currentFloor->current_npcs);
+		n->currentFloor = NULL;
+		return ;
+	}
+	int home_x, home_y;
+	home_x = n->placeOfResidence->parentFloor->parentBuilding->x;
+	home_y = n->placeOfResidence->parentFloor->parentBuilding->y;
+	if (n->currentBuilding->x != home_x || n->currentBuilding->y != home_y)
+	{
+		if (n->x < home_x)
+			n->x++;
+		else if (n->x > home_x)
+			n->x--;
+		else if (n->y < home_y)
+			n->y++;
+		else if (n->y > home_y)
+			n->y--;
+		remove_npc(n, n->currentBuilding->current_npcs);
+		n->currentBuilding = n->currentBuilding->parentCity->cityMap[n->x][n->y];
+		add_npc(n, n->currentBuilding->current_npcs);
+		return ;
+	}
+	if (n->currentBuilding->x == home_x && n->currentBuilding->y == home_y)
+	{
+		n->currentFloor = n->placeOfResidence->parentFloor;
+		add_npc(n, n->currentFloor->current_npcs);
+		remove_npc(n, n->currentBuilding->current_npcs);
+		return ;
+	}
+	if (n->currentFloor == n->placeOfResidence->parentFloor)
+	{
+		n->currentRoom = n->placeOfResidence;
+		add_npc(n, n->currentRoom->current_npcs);
+		remove_npc(n, n->currentFloor->current_npcs);
+		return ;
+	}
+}
+
 void npc_tick(npc* n, city* c)
 {
 	if (!n->dailySchedule)
@@ -119,6 +173,10 @@ void npc_tick(npc* n, city* c)
 	if (c->time >= n->dailySchedule->work_start && c->time < n->dailySchedule->work_end)
 	{
 		gotoWork(n);
+	}
+	else
+	{
+		gotoHone(n);
 	}
 }
 

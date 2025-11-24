@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include "ui.h"
 #include "saveload.h"
+#include <stdlib.h>
 
-void printMap(city* c, player* p) {
+void printMap(city* c, player* p)
+{
 	printf("\n\033[36m%s City Map\033[0m\n", c->name); // Cyan city name
 	printf("╔");
 	for(int i = 0; i < c->width; i++) {
@@ -58,16 +60,19 @@ void printMap(city* c, player* p) {
 	printf("\n\033[33mLegend:\033[0m ☺=You | ⌂=Home | F=Office | ·=Empty\n\n");
 }
 
-void printSeparator() {
+void printSeparator()
+{
 	printf("\n\033[35m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n");
 }
 
-void clearInputBuffer() {
+void clearInputBuffer()
+{
 	int c;
 	while ((c = getchar()) != '\n' && c != EOF);
 }
 
-int safeInput(int min, int max) {
+int safeInput(int min, int max)
+{
 	int choice;
 	while(1) {
 		if(scanf("%d", &choice) == 1) {
@@ -81,286 +86,423 @@ int safeInput(int min, int max) {
 	}
 }
 
-void handleDialogue(player* p, npc* n) {
-	printf("\n🗨️ \033[1m%s %s\033[0m\n", n->firstName, n->lastName);
-	printf("1. Ask about work\n");
-	printf("2. Ask about family\n");
-	printf("3. Ask about hobbies\n");
-	printf("4. Say goodbye\n» Choice: ");
-	int choice = safeInput(1, 4);
-	clear();
-	switch(choice) {
-		case 1:
-			if(n->placeOfWork){
-				printf("%s %s says: 'I work at %s.'\n", n->firstName, n->lastName, n->placeOfWork->name);
-			}
-			else{
-				printf("%s %s says: 'I don't work'\n", n->firstName, n->lastName);
-			}
-			break;
-		case 2:
-			printf("%s %s says: 'I live at %s.'\n", n->firstName, n->lastName, n->placeOfResidence->parentFloor->parentBuilding->name);
-			break;
-		case 3:
-			printf("%s %s says: 'I like to read books.'\n", n->firstName, n->lastName);
-			break;
-		case 4:
-			printf("%s %s says: 'Goodbye!'\n", n->firstName, n->lastName);
-			break;
+//returns the number of NPCs in the npcList
+int getNpcs(npc** npcList)
+{
+	int count = 0;
+	while ((npcList[count] != NULL) && (count < MAX_NPC)) {
+		count++;
+	}
+	return count;
+}
+
+//prints the list of NPCs in the npcList
+void listNpcs(npc** npcList, int startIndex)
+{
+	int count = getNpcs(npcList);
+	for (int i = 0; i < count; i++) {
+		printf("%d: %s %s\n", i + 1 + startIndex, npcList[i]->firstName, npcList[i]->lastName);
 	}
 }
 
-// Подфункции для разных состояний игры
-void handleResidentialRoom(player* p) {
-	room* r = p->currentRoom;
-
-	if(r->npc_count > 1){
-		printf("\n👥 \033[1m%s's Room\033[0m\n", r->npcs[0]->lastName);
-		printf("1. Talk to %s's\n", r->npcs[0]->lastName);
-	} else {
-		printf("\n👤 \033[1m%s %s's Room\033[0m\n", r->npcs[0]->firstName, r->npcs[0]->lastName);
-		printf("1. Talk to %s\n", r->npcs[0]->firstName);
-	}
-
-	printf("2. Search the room\n");
-	printf("3. Leave\n» Choice: ");
-
-	int choice = safeInput(1, 3);
-	clear();
-
-	switch(choice) {
-		case 1:
-			if (r->npc_count == 1) {
-				handleDialogue(p, r->npcs[0]);
-			} else {
-				for (int i = 0; i < r->npc_count; i++) {
-					printf("%d. Talk to %s %s\n", i + 1, r->npcs[i]->firstName, r->npcs[i]->lastName);
-				}
-				printf("%d. Leave\n» Choice: ", r->npc_count + 1);
-				int npcChoice = safeInput(1, r->npc_count + 1);
-				clear();
-				if (npcChoice == r->npc_count + 1) {
-					break;
-				}
-				handleDialogue(p, r->npcs[npcChoice - 1]);
-			}
-			break;
-		case 2:
-			printf("\n🔍 You find dusty code snippets and a half-eaten pizza.\n");
-			break;
-		case 3:
-			p->currentRoom = NULL;
-			break;
-	}
+void printTime(city* c) {
+	printf("\033[33mDay %d, Time: %02d:00\033[0m\n", c->day, c->time);
 }
 
-void handleEmptyRoom(player* p){
-	printf("\n🚪 Empty Room\n");
-	printf("1. Search the room\n");
-	printf("2. Leave\n» Choice: ");
-	int choice = safeInput(1, 2);
-	clear();
+void handleMapMovement(city* c, player* p)
+{
+	int choice;
 
-	switch(choice) {
-		case 1:
-			printf("\n🔍 You find nothing but dust and a flickering light.\n");
-			break;
-		case 2:
-			p->currentRoom = NULL;
-			break;
-	}
-}
-
-void handleResidentialFloor(player* p) {
-	printf("\n🏠 Floor Menu:\n");
-	printf("1. Enter a room (1-4)\n");
-	printf("2. Exit building\n");
-	printf("3. Switch floor\n» Choice: ");
-
-	int choice = safeInput(1, 3);
-	clear();
-
-	switch(choice) {
-		case 1: {
-			printf("Enter room number: ");
-			int roomChoice = safeInput(1, 4);
-			residentialFloor* resFloor = p->currentFloor->floorTypeData.residentialFloorData;
-
-			if(resFloor) {
-				p->currentRoom = resFloor->rooms[roomChoice - 1];
-			} else {
-				printf("Invalid floor data.\n");
-			}
-			break;
-		}
-		case 2:
-			p->currentFloor = NULL;
-			p->currentBuilding = NULL;
-			break;
-		case 3: {
-			printf("Choose a floor (1-%d):\n", p->currentBuilding->height);
-			for(int i = 0; i < p->currentBuilding->height; i++) {
-				printf("%d. Floor %d\n", i + 1, i + 1);
-			}
-			int floorChoice = safeInput(1, p->currentBuilding->height);
-			p->currentFloor = p->currentBuilding->floors[floorChoice - 1];
-			break;
-		}
-	}
-}
-
-void handleOfficeFloor(player* p) {
-	printf("\n🏢 Office Floor\n");
-	printf("1. Exit building\n");
-	printf("2. List companies\n");
-	printf("3. Switch floor\n» Choice: ");
-
-	int choice = safeInput(1, 3);
-	clear();
-
-	switch(choice) {
-		case 1:
-			p->currentFloor = NULL;
-			p->currentBuilding = NULL;
-			break;
-		case 2: {
-			officeFloor* officeFlr = p->currentFloor->floorTypeData.officeFloorData;
-			if(!officeFlr) break;
-
-			printf("Choose an office:\n");
-			for(int i = 0; i < officeFlr->office_count; i++) {
-				printf("%d. %s\n", i + 1, officeFlr->offices[i]->name);
-			}
-			int officeChoice = safeInput(1, officeFlr->office_count);
-			office* o = officeFlr->offices[officeChoice - 1];
-
-			printf("Employees of %s:\n", o->name);
-			for(int i = 0; i < o->employee_count; i++) {
-				printf("%d. %s %s\n", i + 1, o->employees[i]->firstName, o->employees[i]->lastName);
-			}
-			int empChoice = safeInput(1, o->employee_count);
-			npc* n = o->employees[empChoice - 1];
-
-			printf("1. Talk to %s %s\n", n->firstName, n->lastName);
-			printf("2. Leave\n» Choice: ");
-			int action = safeInput(1, 2);
-
-			if(action == 1) {
-				printf("%s %s says: 'Hello! Welcome to my office.'\n",
-					  n->firstName, n->lastName);
-			}
-			break;
-		}
-		case 3: {
-			printf("Choose a floor (1-%d):\n", p->currentBuilding->height);
-			for(int i = 0; i < p->currentBuilding->height; i++) {
-				printf("%d. Floor %d\n", i + 1, i + 1);
-			}
-			int floorChoice = safeInput(1, p->currentBuilding->height);
-			p->currentFloor = p->currentBuilding->floors[floorChoice - 1];
-			break;
-		}
-	}
-}
-
-void handleBuildingInteraction(city* c, player* p) {
 	printSeparator();
-	printf("📍 \033[1m%s\033[0m | Floor: %d\n",
-		  p->currentBuilding->name,
-		  p->currentFloor->floorNumber + 1);
-	printSeparator();
+	printMap(c, p);
 
-	if(p->currentRoom) {
-		printf("%d", p->currentRoom->npc_count);
-		if (p->currentRoom->npc_count > 0) {
-			handleResidentialRoom(p);
-		} else {
-			handleEmptyRoom(p);
-		}
-	} else {
-		switch(p->currentFloor->floorType) {
-			case RESIDENTIAL:
-				handleResidentialFloor(p);
-				break;
-			case OFFICE:
-				handleOfficeFloor(p);
-				break;
-		}
+	printf("1: Move north\n");
+	printf("2: Move south\n");
+	printf("3: Move east\n");
+	printf("4: Move west\n");
+	printf("0: Do nothing\n");
+	choice = safeInput(0, 4);
+	switch (choice)
+	{
+	case 1:
+		if (p->x > 0)
+			p->x -= 1;
+		else
+			printf("You can't move further north.\n");
+		break;
+
+	case 2:
+		if (p->x < c->height - 1)
+			p->x += 1;
+		else
+			printf("You can't move further south.\n");
+		break;
+
+	case 3:
+		if (p->y < c->width - 1)
+			p->y += 1;
+		else
+			printf("You can't move further east.\n");
+		break;
+
+	case 4:
+		if (p->y > 0)
+			p->y -= 1;
+		else
+			printf("You can't move further west.\n");
+		break;
+	}
+	p->currentBuilding = c->cityMap[p->x][p->y];
+	c->addTime(c, 1);
+}
+
+void handleDialogue(player* p, npc* n)
+{
+	int choice;
+
+	printTime(p->currentBuilding->parentCity);
+	printSeparator();
+	printf("You are talking to %s %s\n", n->firstName, n->lastName);
+	printf("1: Ask about their day\n");
+	printf("2: Say goodbye\n");
+	choice = safeInput(1, 2);
+	switch (choice)
+	{
+	case 1:
+		printf("%s says: 'It's been a busy day at work!'\n", n->firstName);
+		break;
+	case 2:
+		printf("You say goodbye to %s.\n", n->firstName);
+		break;
+
+	default:
+		break;
 	}
 }
 
-void handleMapMovement(city* c, player* p) {
-	printf("1. North 🡹\n2. South 🡻\n3. West 🡸\n4. East 🡺\n» ");
-	int dir = safeInput(1, 4);
+void handleResidentialRoom(city *c, player* p)
+{
+	int 		choice;
+	const int	npcCount = getNpcs(p->currentRoom->current_npcs);
 
-	switch(dir) {
-		case 1:
-			if(p->x > 0) p->x--;
-			else printf("You're at the city's northern edge!\n");
+	printTime(c);
+	printSeparator();
+	printf("You are in room number %d\n", p->currentRoom->room_number);
+	if (npcCount > 0)
+	{
+		if (npcCount == 1)
+			printf("There is 1 person here\n");
+		else
+			printf("There are %d people here\n", npcCount);
+	}
+	else
+		printf("The room is empty.\n");
+
+	printf("1: Talk to someone\n");
+	printf("0: Exit room\n");
+	choice = safeInput(0, 1);
+	switch (choice)
+	{
+	case 1:
+		if (npcCount == 0)
+		{
+			printf("There is no one to talk to.\n");
 			break;
-		case 2:
-			if(p->x < c->height - 1) p->x++;
-			else printf("You're at the city's southern edge!\n");
-			break;
-		case 3:
-			if(p->y > 0) p->y--;
-			else printf("You're at the city's western edge!\n");
-			break;
-		case 4:
-			if(p->y < c->width - 1) p->y++;
-			else printf("You're at the city's eastern edge!\n");
-			break;
+		}
+		listNpcs(p->currentRoom->current_npcs, 0);
+		printf("Choose a person to talk to (0 to cancel): ");
+		choice = safeInput(0, npcCount);
+		if (choice == 0)
+			break ;
+		handleDialogue(p, p->currentRoom->current_npcs[choice - 1]);
+		break;
+
+	case 0:
+		printf("You exit the room.\n");
+		p->currentRoom = NULL;
+		break;
+
+	default:
+		break;
 	}
 }
 
-void handleOutsideInteraction(city* c, player* p) {
+void handleOffice(city* c, player* p)
+{
+	int 		choice;
+	const int	npcCount = getNpcs(p->currentOffice->current_npcs);
+
+	printTime(c);
 	printSeparator();
-	printf("🌆 You're at \033[1m%s\033[0m\n", c->cityMap[p->x][p->y]->name);
+	printf("You are in office number %d of %s\n", p->currentOffice->office_number, p->currentOffice->name);
+	if (npcCount > 0)
+	{
+		if (npcCount == 1)
+			printf("There is 1 person here\n");
+		else
+			printf("There are %d people here\n", npcCount);
+	}
+	else
+		printf("The office is empty.\n");
+
+	printf("1: Talk to someone\n");
+	printf("0: Exit office\n");
+	choice = safeInput(0, 1);
+	switch (choice)
+	{
+	case 1:
+		if (npcCount == 0)
+		{
+			printf("There is no one to talk to.\n");
+			break;
+		}
+		listNpcs(p->currentOffice->current_npcs, 0);
+		printf("Choose a person to talk to (0 to cancel): ");
+		choice = safeInput(0, npcCount);
+		if (choice == 0)
+			break ;
+		handleDialogue(p, p->currentOffice->current_npcs[choice - 1]);
+		break;
+
+	case 0:
+		printf("You exit the office.\n");
+		p->currentOffice = NULL;
+		break;
+
+	default:
+		break;
+	}
+}
+
+void handleResidentialFloor(player* p)
+{
+	int choice;
+
+	const int	npcCount = getNpcs(p->currentFloor->current_npcs);
+	printTime(p->currentBuilding->parentCity);
 	printSeparator();
+	printf("You are on floor %d of %s\n", p->currentFloor->floorNumber, p->currentBuilding->name);
+	if (npcCount > 0)
+	{
+		if (npcCount == 1)
+			printf("There is 1 person here\n");
+		else
+			printf("There are %d people here\n", npcCount);
+	}
+	else
+		printf("The floor is empty.\n");
+	printf("1: Enter a room\n");
+	printf("2: Talk to someone\n");
+	printf("3: Go to another floor\n");
+	if (p->currentFloor->floorNumber == 0)
+		printf("0: Exit building\n");
+	choice = safeInput(p->currentFloor->floorNumber > 0, 3);
+	switch (choice)
+	{
+	case 1:
+		printf("Choose a room to enter:\n");
+		for (int i = 0; i < p->currentFloor->floorTypeData.residentialFloorData->room_count; i++)
+		{
+			printf("%d: Room %d\n", i + 1, p->currentFloor->floorTypeData.residentialFloorData->rooms[i]->room_number);
+		}
+		choice = safeInput(1, p->currentFloor->floorTypeData.residentialFloorData->room_count);
+		p->currentRoom = p->currentFloor->floorTypeData.residentialFloorData->rooms[choice - 1];
+		break;
 
-	printf("1. Enter building\n");
-	printf("2. Move\n");
-	printf("3. View map\n");
-	printf("4. Spend time\n");
-	printf("5. Save\n» Choice: ");
+	case 2:
+		if (npcCount == 0)
+		{
+			printf("There is no one to talk to.\n");
+			break;
+		}
+		listNpcs(p->currentFloor->current_npcs, 0);
+		printf("Choose a person to talk to (0 to cancel): ");
+		choice = safeInput(0, npcCount);
+		if (choice == 0)
+			break ;
+		handleDialogue(p, p->currentFloor->current_npcs[choice - 1]);
+		break;
 
-	int choice = safeInput(1, 4);
-	clear();
+	case 3:
+		printf("Choose a floor to go to (0 to cancel):\n");
+		for (int i = 0; i < p->currentBuilding->height; i++)
+		{
+			printf("%d: Floor %d\n", i + 1, i);
+		}
+		choice = safeInput(0, p->currentBuilding->height);
+		if (choice == 0)
+			break ;
+		p->currentFloor = p->currentBuilding->floors[choice - 1];
+		break;
 
-	switch(choice) {
-		case 1:
-			if(c->cityMap[p->x][p->y]) {
-				p->currentBuilding = c->cityMap[p->x][p->y];
-				p->currentFloor = p->currentBuilding->floors[0]; // Start at ground floor
-			} else {
-				printf("There is no building here.\n");
-			}
+	case 0:
+		printf("You exit the building.\n");
+		p->currentFloor = NULL;
+		break;
+
+	default:
+		break;
+	}
+}
+
+void handleOfficeFloor(player* p)
+{
+	int choice;
+
+	const int	npcCount = getNpcs(p->currentFloor->current_npcs);
+	printTime(p->currentBuilding->parentCity);
+	printSeparator();
+	printf("You are on floor %d of %s\n", p->currentFloor->floorNumber, p->currentBuilding->name);
+	if (npcCount > 0)
+	{
+		if (npcCount == 1)
+			printf("There is 1 person here\n");
+		else
+			printf("There are %d people here\n", npcCount);
+	}
+	else
+		printf("The floor is empty.\n");
+	printf("1: Enter an office\n");
+	printf("2: Talk to someone\n");
+	printf("3: Go to another floor\n");
+	if (p->currentFloor->floorNumber == 0)
+		printf("0: Exit building\n");
+	choice = safeInput(p->currentFloor->floorNumber > 0, 3);
+	switch (choice)
+	{
+	case 1:
+		printf("Choose an office to enter:\n");
+		for (int i = 0; i < p->currentFloor->floorTypeData.officeFloorData->office_count; i++)
+		{
+			printf("%d: Office %d\n", i + 1, p->currentFloor->floorTypeData.officeFloorData->offices[i]->office_number);
+		}
+		choice = safeInput(1, p->currentFloor->floorTypeData.officeFloorData->office_count);
+		p->currentOffice = p->currentFloor->floorTypeData.officeFloorData->offices[choice - 1];
+		break;
+
+	case 2:
+		if (npcCount == 0)
+		{
+			printf("There is no one to talk to.\n");
 			break;
-		case 2:
-			handleMapMovement(c, p);
-			c->addTime(c, 1); // Moving takes 1 hour
+		}
+		listNpcs(p->currentFloor->current_npcs, 0);
+		printf("Choose a person to talk to (0 to cancel): ");
+		choice = safeInput(0, npcCount);
+		if (choice == 0)
+			break ;
+		handleDialogue(p, p->currentFloor->current_npcs[choice - 1]);
+		break;
+
+	case 3:
+		printf("Choose a floor to go to (0 to cancel):\n");
+		for (int i = 0; i < p->currentBuilding->height; i++)
+		{
+			printf("%d: Floor %d\n", i + 1, i);
+		}
+		choice = safeInput(0, p->currentBuilding->height);
+		if (choice == 0)
+			break ;
+		p->currentFloor = p->currentBuilding->floors[choice - 1];
+		break;
+
+	case 0:
+		printf("You exit the building.\n");
+		p->currentFloor = NULL;
+		break;
+
+	default:
+		break;
+	}
+}
+
+void handleOutsideInteraction(city* c, player* p)
+{
+	int choice;
+	const int	npcCount = getNpcs(p->currentBuilding->current_npcs);
+
+	printTime(c);
+	printSeparator();
+	printf("You are outside at (%d, %d) in front of %s\n", p->x, p->y, p->currentBuilding->name);
+	printf("1: Enter building\n");
+	printf("2: Move on the map\n");
+	if (npcCount > 0)
+	{
+		if (npcCount == 1)
+			printf("There is 1 person here\n");
+		else
+			printf("There are %d people here\n", npcCount);
+	}
+	else
+		printf("The street is empty.\n");
+	printf("3: Talk to someone\n");
+	printf("4: Sleep on the bench\n");
+	printf("0: Exit Game\n");
+	choice = safeInput(0, 4);
+	switch (choice)
+	{
+	case 1:
+		p->currentFloor = p->currentBuilding->floors[0];
+		break;
+
+	case 2:
+		handleMapMovement(c, p);
+		break;
+
+	case 3:
+		if (npcCount == 0)
+		{
+			printf("There is no one to talk to.\n");
 			break;
-		case 3:
-			printMap(c, p);
-			break;
-		case 4:
-		    printf("Enter hours to spend (1-12): ");
-		    int hours = safeInput(1, 12);
-		    c->addTime(c, hours);
-		    printf("You spent %d hours. Current time: %02d:00, Day %d\n", hours, c->time, c->day);
-		    break;
-		case 5:
-			printf("sry, work in progress.");
-			//makeSavefile(c, p);
-			break;
+		}
+		listNpcs(p->currentBuilding->current_npcs, 0);
+		printf("Choose a person to talk to (0 to cancel): ");
+		choice = safeInput(0, npcCount);
+		if (choice == 0)
+			break ;
+		handleDialogue(p, p->currentBuilding->current_npcs[choice - 1]);
+		break;
+
+	case 4:
+		printf("How many hours do you want to sleep? (from 1 to 12): ");
+		choice = safeInput(1, 12);
+		c->addTime(c, choice);
+		printf("You slept for %d hours.\n", choice);
+		break;
+	case 0:
+		// saveGame(c, p);
+		printf("Exiting...\n");
+		exit(0);
+		break;
+
+	default:
+		break;
 	}
 }
 
 // Основная функция
 void playerControl(city* c, player* p) {
-	if(p->currentBuilding) {
-		handleBuildingInteraction(c, p);
-	} else {
+	if (p->currentRoom)
+	{
+		handleResidentialRoom(c, p);
+	}
+	else if (p->currentOffice)
+	{
+		handleOffice(c, p);
+	}
+	else if (p->currentFloor)
+	{
+		if (p->currentBuilding->building_type == RESIDENTIAL)
+		{
+			handleResidentialFloor(p);
+		}
+		else if (p->currentBuilding->building_type == OFFICE)
+		{
+			handleOfficeFloor(p);
+		}
+	}
+	else
+	{
 		handleOutsideInteraction(c, p);
 	}
 }
