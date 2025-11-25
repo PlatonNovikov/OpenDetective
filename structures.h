@@ -25,81 +25,81 @@ extern const char *first_half[FIRST_HALF_COMPANY];
 
 extern const char *second_half[SECOND_HALF_COMPANY];
 
-typedef enum type {
+typedef enum e_type {
 	RESIDENTIAL, // Жилой этаж
 	COMMERCIAL,  // Коммерческий этаж
 	OFFICE  // Промышленный этаж
-} type;
+} e_type;
 
 // Forward declaration of npc struct
-typedef struct npc npc;
-typedef struct room room;
-typedef struct residentialFloor residentialFloor;
-typedef struct office office;
-typedef struct officeFloor officeFloor;
-typedef struct floor floor;
-typedef struct building building;
-typedef struct city city;
-typedef struct player player;
+typedef struct t_npc t_npc;
+typedef struct t_room t_room;
+typedef struct t_residentialFloor t_residentialFloor;
+typedef struct t_office t_office;
+typedef struct t_officeFloor t_officeFloor;
+typedef struct t_floor t_floor;
+typedef struct t_building t_building;
+typedef struct t_city t_city;
+typedef struct t_player t_player;
 
-typedef struct room {
-	npc		**npcs;          // Array of NPC pointers
-	npc		**current_npcs; // Currently present NPCs
+typedef struct t_room {
+	t_npc	**npcs;          // Array of NPC pointers
+	t_npc	**current_npcs; // Currently present NPCs
 	int		npc_count;
 	int		room_number;
-	floor	*parentFloor;
-} room;
+	t_floor	*parentFloor;
+} t_room;
 
-typedef struct residentialFloor{
-	room	**rooms;
+typedef struct t_residentialFloor{
+	t_room	**rooms;
 	int		room_count;
-	floor	*parentFloor;
-} residentialFloor;
+	t_floor	*parentFloor;
+} t_residentialFloor;
 
-typedef struct office{
+typedef struct t_office{
 	char	name[100];
-	npc		**employees;
+	t_npc	**employees;
 	int		employee_count;
-	floor	*parentFloor;
+	t_floor	*parentFloor;
 	int		office_number;
-	npc		**current_npcs; // Currently present NPCs
-} office;
+	t_npc	**current_npcs; // Currently present NPCs
+} t_office;
 
-typedef struct officeFloor{
-	office	**offices;
-	int		office_count;
-	floor	*parentFloor;
-} officeFloor;
+typedef struct t_officeFloor{
+	t_office	**offices;
+	int			office_count;
+	t_floor		*parentFloor;
+} t_officeFloor;
 
-typedef struct floor {
+typedef struct t_floor {
 	int						floorNumber;
 	union {
-		officeFloor*		officeFloorData;
-		residentialFloor*	residentialFloorData;
+		t_officeFloor*		officeFloorData;
+		t_residentialFloor*	residentialFloorData;
 	} floorTypeData;
-	type					floorType;
-	building				*parentBuilding;
-	npc						**current_npcs; // Currently present NPCs
-} floor;
+	e_type					floorType;
+	t_building				*parentBuilding;
+	t_npc					**current_npcs; // Currently present NPCs
+} t_floor;
 
-typedef struct building {
+typedef struct t_building {
 	char	name[100];
 	int		x, y;
 	int		height;
-	floor	**floors;
-	city	*parentCity;
-	type	building_type;
-	npc		**current_npcs; // Currently present NPCs
-} building;
+	t_floor	**floors;
+	t_city	*parentCity;
+	e_type	building_type;
+	t_npc	**current_npcs; // Currently present NPCs
+} t_building;
 
-typedef struct player {
+typedef struct t_player {
 	int			x;
 	int			y;
-	building	*currentBuilding;
-	floor		*currentFloor;
-	room		*currentRoom;
-	office		*currentOffice;
+	t_building	*currentBuilding;
+	t_floor		*currentFloor;
+	t_room		*currentRoom;
+	t_office		*currentOffice;
 	char		name[100];
-} player;
+} t_player;
 
 #endif

@@ -1,13 +1,14 @@
 # Установки для компилятора
 CC = gcc
 CFLAGS = -Wall -Wextra -g
+LDFLAGS = -lm
 
 # Папки
 OBJ_DIR = obj
 BIN_DIR = bin
 
 # Исходные и объектные файлы
-SRC = structures.c city.c npc.c generators.c saveload.c ui.c OpenDetective.c 
+SRC = structures.c city.c npc.c generators.c saveload.c ui.c OpenDetective.c
 OBJ = $(SRC:%.c=$(OBJ_DIR)/%.o)
 
 # Имя конечной программы
@@ -19,7 +20,7 @@ all: $(TARGET)
 # Правило для компиляции конечной программы
 $(TARGET): $(OBJ)
 	@mkdir -p $(BIN_DIR)  # Создаём папку bin, если её нет
-	$(CC) $(OBJ) -o $@
+	$(CC) $(OBJ) -o $@ $(LDFLAGS)
 
 # Правило для компиляции каждого .c файла в .o
 $(OBJ_DIR)/%.o: %.c

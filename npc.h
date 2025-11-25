@@ -5,54 +5,123 @@
 #include "city.h"
 
 #define MAX_RELATIONSHIPS 100
+#define EYE_COLOR_COUNT 4
+#define HAIR_COLOR_COUNT 5
+#define BLOOD_TYPE_COUNT 8
+#define FINGERPRINT_TYPE_COUNT 20
 
-typedef enum relationship_type {
+typedef enum e_relationship_type {
 	FAMILY,
 	FRIEND,
 	COWORKER,
-} relationship_type;
+} e_relationship_type;
 
-typedef struct relationship {
-	npc					*target;	// Pointer to the related NPC
-	relationship_type	type;		// Type of relationship
+typedef struct t_relationship {
+	t_npc				*target;	// Pointer to the related NPC
+	e_relationship_type	type;		// Type of relationship
 	int					strength;	// 0-100 (e.g., closeness, trust)
 	int					count;		// Number of interactions
-} relationship;
+} t_relationship;
 
-typedef struct schedule {
+typedef struct t_schedule {
 	int	work_start;
 	int	work_end;
-} schedule;
+} t_schedule;
 
-typedef struct npc {
+typedef struct t_leg{
+	int health;
+} t_leg;
+
+typedef struct t_arm{
+	int health;
+} t_arm;
+
+typedef struct t_head{
+	int health;
+} t_head;
+
+typedef struct t_torso{
+	int health;
+} t_torso;
+
+typedef enum e_eye_color {
+	EYE_COLOR_BLUE,
+	EYE_COLOR_GREEN,
+	EYE_COLOR_BROWN,
+	EYE_COLOR_GRAY,
+} e_eye_color;
+
+typedef enum e_hair_color {
+	HAIR_COLOR_BLACK,
+	HAIR_COLOR_BROWN,
+	HAIR_COLOR_BLONDE,
+	HAIR_COLOR_RED,
+	HAIR_COLOR_GRAY,
+} e_hair_color;
+
+typedef enum e_blood_type {
+	BLOOD_TYPE_A_POS,
+	BLOOD_TYPE_A_NEG,
+	BLOOD_TYPE_B_POS,
+	BLOOD_TYPE_B_NEG,
+	BLOOD_TYPE_AB_POS,
+	BLOOD_TYPE_AB_NEG,
+	BLOOD_TYPE_O_POS,
+	BLOOD_TYPE_O_NEG,
+} e_blood_type;
+
+typedef enum e_fingerprint {
+	FINGER_PRINT_A1, FINGER_PRINT_A2, FINGER_PRINT_A3, FINGER_PRINT_A4, FINGER_PRINT_A5,
+	FINGER_PRINT_B1, FINGER_PRINT_B2, FINGER_PRINT_B3, FINGER_PRINT_B4, FINGER_PRINT_B5,
+	FINGER_PRINT_C1, FINGER_PRINT_C2, FINGER_PRINT_C3, FINGER_PRINT_C4, FINGER_PRINT_C5,
+	FINGER_PRINT_D1, FINGER_PRINT_D2, FINGER_PRINT_D3, FINGER_PRINT_D4, FINGER_PRINT_D5,
+} e_fingerprint;
+
+typedef struct t_npc {
 	char			firstName[100];
 	char			lastName[100];
-	room			*placeOfResidence;
-	office			*placeOfWork;
+	t_room			*placeOfResidence;
+	t_office		*placeOfWork;
 	int 			x,y;
-	building		*currentBuilding;
-	floor			*currentFloor;
-	room			*currentRoom;
-	office			*currentOffice;
+	t_building		*currentBuilding;
+	t_floor			*currentFloor;
+	t_room			*currentRoom;
+	t_office		*currentOffice;
+	int				isAlive;
 
-	relationship	*relationships; // Dynamic array of relationships
+	t_relationship	*relationships; // Dynamic array of relationships
 	int				relationshipCount;
+	int				sanity;         // 0-100
 
-	schedule		*dailySchedule;
+	t_schedule		*dailySchedule;
 
-	void			(*tick)(struct npc* n, city* c);
-} npc;
+	//body parts
+	t_leg			leftLeg;
+	t_leg			rightLeg;
+	t_arm			leftArm;
+	t_arm			rightArm;
+	t_head			headPart;
+	t_torso			torsoPart;
 
-void generate_npc(npc* new_npc, city* c);
+	//distinctive features
+	e_eye_color		eyeColor;
+	e_hair_color	hairColor;
+	e_blood_type	bloodType;
+	e_fingerprint	fingerprintType;
 
-void generate_family(int count, npc** family, city* c);
+	void			(*tick)(struct t_npc* n, t_city* c);
+} t_npc;
 
-void gotoWork(npc* n);
+void generate_npc(t_npc* new_npc, t_city* c);
 
-void npc_tick(npc* n, city* c);
+void generate_family(int count, t_npc** family, t_city* c);
 
-void add_npc(npc *n, npc **npc_list);
+void gotoWork(t_npc* n);
 
-void remove_npc(npc *n, npc **npc_list);
+void npc_tick(t_npc* n, t_city* c);
+
+void add_npc(t_npc *n, t_npc **npc_list);
+
+void remove_npc(t_npc *n, t_npc **npc_list);
 
 #endif

@@ -10,7 +10,7 @@
 #include "npc.h"
 #include "city.h"
 
-void player_building_spawn(city* c, player* p){
+void player_building_spawn(t_city* c, t_player* p){
 	for (int x = p->x; x < c->height; ++x) {
 		for (int y = (x == p->x ? p->y : 0); y < c->width; ++y) {
 			if (c->cityMap[x][y]->building_type == RESIDENTIAL) {
@@ -35,7 +35,7 @@ void player_building_spawn(city* c, player* p){
 	}
 }
 
-void start(city* c, player* p) {
+void start(t_city* c, t_player* p) {
 	printf("Enter city name: ");
 	scanf("%99s", c->name);
 	clear();
@@ -48,23 +48,21 @@ void start(city* c, player* p) {
 	printf("Generating...\n");
 
 	c->addTime = addTime;
-	c->time = 12;
-	c->day = 1;
-	c->cityMap = (building***)calloc(c->height, sizeof(building**));
+	c->cityMap = (t_building***)calloc(c->height, sizeof(t_building**));
 	if (!c->cityMap) {
 		printf("Error allocating memory for city map.\n");
 		exit(1);
 	}
 
 	for (int i = 0; i < c->height; i++) {
-		c->cityMap[i] = (building**)calloc(c->width, sizeof(building*));
+		c->cityMap[i] = (t_building**)calloc(c->width, sizeof(t_building*));
 		if (!c->cityMap[i]) {
 			printf("Error allocating memory for city map row.\n");
 			exit(1);
 		}
 
 		for (int j = 0; j < c->width; j++) {
-			building* b = (building*)calloc(1, sizeof(building));
+			t_building* b = (t_building*)calloc(1, sizeof(t_building));
 			if (!b) {
 				printf("Error allocating memory for building.\n");
 				exit(1);
@@ -75,7 +73,7 @@ void start(city* c, player* p) {
 			b->y = j;
 			b->height = rand() % 7 + 3; // Высота от 3 до 10 этажей
 			b->parentCity = c;
-			b->current_npcs = (npc**)calloc(MAX_NPC_PRESENT, sizeof(npc*));
+			b->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
 			if (!b->current_npcs)
 			{
 				printf("Error allocating memory for current NPCs in building.\n");
@@ -108,12 +106,12 @@ void start(city* c, player* p) {
 			}
 		}
 	}
-	c->residentialBuildingsList = (building**)calloc(c->residentialBuildings, sizeof(building*));
+	c->residentialBuildingsList = (t_building**)calloc(c->residentialBuildings, sizeof(t_building*));
 	if (!c->residentialBuildingsList) {
 		printf("Error allocating memory for residential buildings.\n");
 		exit(1);
 	}
-	c->officeBuildingsList = (building**)calloc(c->officeBuildings, sizeof(building*));
+	c->officeBuildingsList = (t_building**)calloc(c->officeBuildings, sizeof(t_building*));
 	if (!c->officeBuildingsList) {
 		printf("Error allocating memory for office buildings.\n");
 		exit(1);
@@ -133,20 +131,21 @@ void start(city* c, player* p) {
 	}
 	for (int i = 0; i < c->height; i++) {
 		for (int j = 0; j < c->width; j++) {
-			building* b = c->cityMap[i][j];
+			t_building* b = c->cityMap[i][j];
 			for (int k = 0; k < b->height; k++) {
 				if (b->floors[k]->floorType == OFFICE) {
 					for (int l = 0; l < b->floors[k]->floorTypeData.officeFloorData->office_count; l++){
-						office* o = b->floors[k]->floorTypeData.officeFloorData->offices[l];
+						t_office* o = b->floors[k]->floorTypeData.officeFloorData->offices[l];
 						snprintf(o->name, sizeof(o->name), "%s", generateCompanyName());
 					}
 				}
 			}
 		}
 	}
-	c->npcList = (npc**)calloc(MAX_NPC, sizeof(npc*));
+	c->npcList = (t_npc**)calloc(MAX_NPC, sizeof(t_npc*));
 	c->npcListCount = 0;
 	populateCity(c);
+	c->addTime(c, 36); //start at 12:00 next day
 	p->x = rand() % c->height;
 	p->y = rand() % c->width;
 	player_building_spawn(c, p);
@@ -158,26 +157,26 @@ void start(city* c, player* p) {
 	//printf("City generated successfully!\n\n");
 }
 
-void freeCity(city* c) {
+void freeCity(t_city* c) {
 	if (!c) return;
 
 	for (int i = 0; i < c->height; i++) {
 		for (int j = 0; j < c->width; j++) {
-			building* b = c->cityMap[i][j];
+			t_building* b = c->cityMap[i][j];
 			if (!b) continue;
 
 			// Освобождаем этажи
 			for (int k = 0; k < b->height; k++) {
-				floor* f = b->floors[k];
+				t_floor* f = b->floors[k];
 				if (!f) continue;
 
 				// Освобождаем данные этажа в зависимости от типа
 				switch (f->floorType) {
 					case RESIDENTIAL: {
-						residentialFloor* resFloor = f->floorTypeData.residentialFloorData;
+						t_residentialFloor* resFloor = f->floorTypeData.residentialFloorData;
 						if (resFloor) {
 							for (int l = 0; l < resFloor->room_count; l++) {
-								room* r = resFloor->rooms[l];
+								t_room* r = resFloor->rooms[l];
 								if (r) {
 									// Освобождаем NPC в комнате
 									if (r->npcs[0]) {
@@ -194,10 +193,10 @@ void freeCity(city* c) {
 					}
 
 					case OFFICE: {
-						officeFloor* of = f->floorTypeData.officeFloorData;
+						t_officeFloor* of = f->floorTypeData.officeFloorData;
 						if (of) {
 							for (int l = 0; l < of->office_count; l++) {
-								office* o = of->offices[l];
+								t_office* o = of->offices[l];
 								if (o) {
 									// Освобождаем сотрудников офиса
 									for (int m = 0; m < o->employee_count; m++) {
@@ -263,16 +262,16 @@ void openCMD(){
 
 int main(int argc, char *argv[])
 {
-	// if (argc < 2 || strcmp(argv[1], "--child") != 0) {
-	// 	openCMD();  // Открываем новый терминал
-	// 	return 0;   // Завершаем текущий процесс, чтобы избежать дублирования
-	// }
+	if (argc < 2 || strcmp(argv[1], "--child") != 0) {
+		openCMD();  // Открываем новый терминал
+		return 0;   // Завершаем текущий процесс, чтобы избежать дублирования
+	}
 	clear();
-	// srand(time(NULL));
-	srand(THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING); //debug
+	srand(time(NULL));
+	// srand(THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING); //debug
 
-	city c;
-	player p;
+	t_city c;
+	t_player p;
 
 	clear();
 	printf("1: New city\n");

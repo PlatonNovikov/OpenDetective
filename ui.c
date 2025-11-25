@@ -4,7 +4,7 @@
 #include "saveload.h"
 #include <stdlib.h>
 
-void printMap(city* c, player* p)
+void printMap(t_city* c, t_player* p)
 {
 	printf("\n\033[36m%s City Map\033[0m\n", c->name); // Cyan city name
 	printf("╔");
@@ -87,7 +87,7 @@ int safeInput(int min, int max)
 }
 
 //returns the number of NPCs in the npcList
-int getNpcs(npc** npcList)
+int getNpcs(t_npc** npcList)
 {
 	int count = 0;
 	while ((npcList[count] != NULL) && (count < MAX_NPC)) {
@@ -97,7 +97,7 @@ int getNpcs(npc** npcList)
 }
 
 //prints the list of NPCs in the npcList
-void listNpcs(npc** npcList, int startIndex)
+void listNpcs(t_npc** npcList, int startIndex)
 {
 	int count = getNpcs(npcList);
 	for (int i = 0; i < count; i++) {
@@ -105,11 +105,11 @@ void listNpcs(npc** npcList, int startIndex)
 	}
 }
 
-void printTime(city* c) {
+void printTime(t_city* c) {
 	printf("\033[33mDay %d, Time: %02d:00\033[0m\n", c->day, c->time);
 }
 
-void handleMapMovement(city* c, player* p)
+void handleMapMovement(t_city* c, t_player* p)
 {
 	int choice;
 
@@ -156,7 +156,7 @@ void handleMapMovement(city* c, player* p)
 	c->addTime(c, 1);
 }
 
-void handleDialogue(player* p, npc* n)
+void handleDialogue(t_player* p, t_npc* n)
 {
 	int choice;
 
@@ -180,7 +180,7 @@ void handleDialogue(player* p, npc* n)
 	}
 }
 
-void handleResidentialRoom(city *c, player* p)
+void handleResidentialRoom(t_city *c, t_player* p)
 {
 	int 		choice;
 	const int	npcCount = getNpcs(p->currentRoom->current_npcs);
@@ -227,7 +227,7 @@ void handleResidentialRoom(city *c, player* p)
 	}
 }
 
-void handleOffice(city* c, player* p)
+void handleOffice(t_city* c, t_player* p)
 {
 	int 		choice;
 	const int	npcCount = getNpcs(p->currentOffice->current_npcs);
@@ -274,7 +274,7 @@ void handleOffice(city* c, player* p)
 	}
 }
 
-void handleResidentialFloor(player* p)
+void handleResidentialFloor(t_player* p)
 {
 	int choice;
 
@@ -345,7 +345,7 @@ void handleResidentialFloor(player* p)
 	}
 }
 
-void handleOfficeFloor(player* p)
+void handleOfficeFloor(t_player* p)
 {
 	int choice;
 
@@ -416,7 +416,7 @@ void handleOfficeFloor(player* p)
 	}
 }
 
-void handleOutsideInteraction(city* c, player* p)
+void handleOutsideInteraction(t_city* c, t_player* p)
 {
 	int choice;
 	const int	npcCount = getNpcs(p->currentBuilding->current_npcs);
@@ -481,7 +481,7 @@ void handleOutsideInteraction(city* c, player* p)
 }
 
 // Основная функция
-void playerControl(city* c, player* p) {
+void playerControl(t_city* c, t_player* p) {
 	if (p->currentRoom)
 	{
 		handleResidentialRoom(c, p);

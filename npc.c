@@ -1,20 +1,33 @@
-#include "npc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+
+#include "npc.h"
 #include "city.h"
 
-void generate_npc(npc* new_npc, city* c) {
+int rand_sanity()
+{
+	double u = rand() / (RAND_MAX + 1.0);
+	double lambda = 4.0; // чем больше λ — тем сильнее шанс больших чисел
+
+	double x = -log(1 - u) / lambda; // экспонента
+	if (x > 1.0) x = 1.0; // обрезаем до 0..1
+
+	return (100 - (int)(x * 100.0));
+}
+
+void generate_npc(t_npc* new_npc, t_city* c) {
 	snprintf(new_npc->firstName, sizeof(new_npc->firstName), "%s", first_names[rand() % ARRAY_SIZE]);
 	snprintf(new_npc->lastName, sizeof(new_npc->lastName), "%s", last_names[rand() % ARRAY_SIZE]);
-	new_npc->relationships = (relationship*)calloc(MAX_RELATIONSHIPS, sizeof(relationship));
+	new_npc->relationships = (t_relationship*)calloc(MAX_RELATIONSHIPS, sizeof(t_relationship));
 	if (!new_npc->relationships) {
 		printf("Error allocating memory for relationships.\n");
 		free(new_npc);
 		exit(1);
 	}
 	new_npc->relationshipCount = 0;
-	new_npc->dailySchedule = (schedule*)calloc(1, sizeof(schedule));
+	new_npc->dailySchedule = (t_schedule*)calloc(1, sizeof(t_schedule));
 	if (!new_npc->dailySchedule)
 	{
 		printf("Error allocating memory for daily schedule.\n");
@@ -23,17 +36,33 @@ void generate_npc(npc* new_npc, city* c) {
 		exit(1);
 	}
 	new_npc->tick = npc_tick;
+
+	new_npc->isAlive = 1;
+	new_npc->leftLeg.health = 100;
+	new_npc->rightLeg.health = 100;
+	new_npc->leftArm.health = 100;
+	new_npc->rightArm.health = 100;
+	new_npc->headPart.health = 100;
+	new_npc->torsoPart.health = 100;
+
+	new_npc->eyeColor = rand() % 4;
+	new_npc->hairColor = rand() % 5;
+	new_npc->bloodType = rand() % 8;
+	new_npc->fingerprintType = rand() % 20;
+
+	new_npc->sanity = rand_sanity();
+
 	c->npcList[c->npcListCount] = new_npc;
 	c->npcListCount += 1;
 }
 
-void generate_family(int count, npc** family, city* c) {
+void generate_family(int count, t_npc** family, t_city* c) {
 	if (!family) {
 		printf("Error allocating memory for family.\n");
 		exit(1);
 	}
 	for (int i = 0; i < count; i++){
-		family[i] = (npc*)calloc(1, sizeof(npc));
+		family[i] = (t_npc*)calloc(1, sizeof(t_npc));
 		if (!family[i]) {
 			printf("Error allocating memory for NPC.\n");
 			exit(1);
@@ -43,12 +72,12 @@ void generate_family(int count, npc** family, city* c) {
 	}
 
 	for (int i = 0; i < count; i++){
-		npc* n = family[i];
+		t_npc* n = family[i];
 		for (int j = 0; j < count; j++){
 			if (i == j){
 				continue;
 			}
-			relationship* r = &n->relationships[n->relationshipCount];
+			t_relationship* r = &n->relationships[n->relationshipCount];
 			r->count = n->relationshipCount + 1;
 			r->strength = 50;
 			r->target = family[j];
@@ -58,7 +87,7 @@ void generate_family(int count, npc** family, city* c) {
 	}
 }
 
-void gotoWork(npc* n){
+void gotoWork(t_npc* n){
 	if(!n->placeOfWork || n->currentOffice == n->placeOfWork){
 		return;
 	}
@@ -111,7 +140,7 @@ void gotoWork(npc* n){
 	}
 }
 
-void gotoHone(npc *n)
+void gotoHone(t_npc *n)
 {
 	if(!n->placeOfResidence || (n->placeOfResidence == n->currentRoom)){
 		return;
@@ -165,7 +194,7 @@ void gotoHone(npc *n)
 	}
 }
 
-void npc_tick(npc* n, city* c)
+void npc_tick(t_npc* n, t_city* c)
 {
 	if (!n->dailySchedule)
 		return; // No schedule defined
@@ -180,7 +209,7 @@ void npc_tick(npc* n, city* c)
 	}
 }
 
-void add_npc(npc *n, npc **npc_list)
+void add_npc(t_npc *n, t_npc **npc_list)
 {
 	for (int i = 0; i < MAX_NPC_PRESENT; i++)
 	{
@@ -192,7 +221,7 @@ void add_npc(npc *n, npc **npc_list)
 	}
 }
 
-void remove_npc(npc *n, npc **npc_list)
+void remove_npc(t_npc *n, t_npc **npc_list)
 {
 	for (int i = 0; i < MAX_NPC_PRESENT; i++)
 	{

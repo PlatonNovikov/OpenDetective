@@ -4,6 +4,6 @@
 #include "npc.h"
 #include "city.h"
 
-void playerControl(city* c, player* p);
+void playerControl(t_city* c, t_player* p);
 
 #endif
