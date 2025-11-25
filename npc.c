@@ -1,10 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-
 #include "npc.h"
-#include "city.h"
 
 int rand_sanity()
 {
@@ -88,7 +82,9 @@ void generate_family(int count, t_npc** family, t_city* c) {
 }
 
 void gotoWork(t_npc* n){
-	if(!n->placeOfWork || n->currentOffice == n->placeOfWork){
+	//check if npc has work or if he is already there
+	if(!n->placeOfWork || n->currentOffice == n->placeOfWork)
+	{
 		return;
 	}
 
@@ -124,7 +120,7 @@ void gotoWork(t_npc* n){
 		add_npc(n, n->currentBuilding->current_npcs);
 		return ;
 	}
-	if (n->currentBuilding->x == work_x && n->currentBuilding->y == work_y)
+	if ((n->currentBuilding->x == work_x && n->currentBuilding->y == work_y) && !n->currentFloor)
 	{
 		n->currentFloor = n->placeOfWork->parentFloor;
 		add_npc(n, n->currentFloor->current_npcs);
@@ -140,7 +136,7 @@ void gotoWork(t_npc* n){
 	}
 }
 
-void gotoHone(t_npc *n)
+void gotoHome(t_npc *n)
 {
 	if(!n->placeOfResidence || (n->placeOfResidence == n->currentRoom)){
 		return;
@@ -178,7 +174,7 @@ void gotoHone(t_npc *n)
 		add_npc(n, n->currentBuilding->current_npcs);
 		return ;
 	}
-	if (n->currentBuilding->x == home_x && n->currentBuilding->y == home_y)
+	if ((n->currentBuilding->x == home_x && n->currentBuilding->y == home_y) && !n->currentFloor)
 	{
 		n->currentFloor = n->placeOfResidence->parentFloor;
 		add_npc(n, n->currentFloor->current_npcs);
@@ -199,13 +195,13 @@ void npc_tick(t_npc* n, t_city* c)
 	if (!n->dailySchedule)
 		return; // No schedule defined
 
-	if (c->time >= n->dailySchedule->work_start && c->time < n->dailySchedule->work_end)
+	if (currentDayMinute(c) >= n->dailySchedule->work_start && currentDayMinute(c) < n->dailySchedule->work_end)
 	{
 		gotoWork(n);
 	}
 	else
 	{
-		gotoHone(n);
+		gotoHome(n);
 	}
 }
 

@@ -1,8 +1,4 @@
 #include "city.h"
-#include "structures.h"
-#include "npc.h"
-#include <stdio.h>
-#include <stdlib.h>
 //boykisser
 //writing it a year later. I have no idea why i wrote "boykisser", but im leaving it here lol
 
@@ -234,10 +230,11 @@ void populateCity(t_city* c){
 					new_npc->currentFloor = new_npc->placeOfResidence->parentFloor;
 					new_npc->currentBuilding = new_npc->placeOfResidence->parentFloor->parentBuilding;
 					add_npc(new_npc, r->current_npcs);
-					if (new_npc->placeOfWork){
+					if (new_npc->placeOfWork)
+					{
 						new_npc->placeOfWork->employees[new_npc->placeOfWork->employee_count] = new_npc;
-						new_npc->dailySchedule->work_start = 9;
-						new_npc->dailySchedule->work_end = 17;
+						new_npc->dailySchedule->work_start = 9 * 60;	//9:00
+						new_npc->dailySchedule->work_end = 17 * 60;		//17:00
 						new_npc->placeOfWork->employee_count++;
 					}
 				}
@@ -262,9 +259,12 @@ void populateCity(t_city* c){
 						family[l]->currentRoom = r;
 						family[l]->currentFloor = family[l]->placeOfResidence->parentFloor;
 						family[l]->currentBuilding = family[l]->placeOfResidence->parentFloor->parentBuilding;
-						if (family[l]->placeOfWork){
+						if (family[l]->placeOfWork)
+						{
 							family[l]->placeOfWork->employees[family[l]->placeOfWork->employee_count] = family[l];
 							family[l]->placeOfWork->employee_count++;
+							family[l]->dailySchedule->work_start = 9 * 60;	//9:00
+							family[l]->dailySchedule->work_end = 17 * 60;	//17:00
 						}
 					}
 
@@ -285,14 +285,31 @@ void timeManager(t_city* c)
 	}
 }
 
-void addTime(t_city* c, int hours)
+void addTime(t_city* c, int minutes)
 {
-	for (int i = 0; i < hours; i++){
+	for (int i = 0; i < minutes; i++){
 		c->time += 1;
-		if (c->time >= 24){
-			c->time = 0;
-			c->day += 1;
-		}
 		timeManager(c);
 	}
+}
+
+int currentDay(t_city *c) //returns current day number
+{
+	return (c->time / (60 * 24));
+}
+
+int currentTimeHour(t_city *c) //returns current hour
+{
+	return ((c->time / 60) % 24);
+}
+
+
+int currentTimeMinute(t_city *c) //returns current minute
+{
+	return (c->time % 60);
+}
+
+int currentDayMinute(t_city *c) //returns current minute
+{
+	return (c->time % (60 * 24));
 }

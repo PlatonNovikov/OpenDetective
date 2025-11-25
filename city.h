@@ -1,7 +1,11 @@
 #ifndef CITY_C
 #define CITY_C
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "structures.h"
+#include "npc.h"
 
 #define MAX_NPC 10000
 
@@ -19,8 +23,7 @@ typedef struct t_city {
 	t_npc		**npcList;
 	int			npcListCount;
 
-	int			time;  // 0-23 (часы)
-	int			day;   // Дни с начала игры
+	size_t		time;  // minutes since start
 	void		(*addTime)(t_city* c, int hours);
 } t_city;
 
@@ -34,4 +37,8 @@ void populateCity(t_city* c);
 
 void addTime(t_city* c, int hours);
 
+int currentDay(t_city *c); //returns current day number
+int currentTimeHour(t_city *c); //returns current hour
+int currentTimeMinute(t_city *c); //returns current minute
+int currentDayMinute(t_city *c); //returns current minute
 #endif

@@ -145,7 +145,8 @@ void start(t_city* c, t_player* p) {
 	c->npcList = (t_npc**)calloc(MAX_NPC, sizeof(t_npc*));
 	c->npcListCount = 0;
 	populateCity(c);
-	c->addTime(c, 36); //start at 12:00 next day
+    c->time = 0;
+	c->addTime(c, 36 * 60); //start at 12:00 next day
 	p->x = rand() % c->height;
 	p->y = rand() % c->width;
 	player_building_spawn(c, p);
@@ -262,10 +263,10 @@ void openCMD(){
 
 int main(int argc, char *argv[])
 {
-	if (argc < 2 || strcmp(argv[1], "--child") != 0) {
-		openCMD();  // Открываем новый терминал
-		return 0;   // Завершаем текущий процесс, чтобы избежать дублирования
-	}
+	// if (argc < 2 || strcmp(argv[1], "--child") != 0) {
+	// 	openCMD();  // Открываем новый терминал
+	// 	return 0;   // Завершаем текущий процесс, чтобы избежать дублирования
+	// }
 	clear();
 	srand(time(NULL));
 	// srand(THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING); //debug

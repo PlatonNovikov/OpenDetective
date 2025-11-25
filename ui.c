@@ -1,8 +1,4 @@
-#include "structures.h"
-#include <stdio.h>
 #include "ui.h"
-#include "saveload.h"
-#include <stdlib.h>
 
 void printMap(t_city* c, t_player* p)
 {
@@ -106,7 +102,7 @@ void listNpcs(t_npc** npcList, int startIndex)
 }
 
 void printTime(t_city* c) {
-	printf("\033[33mDay %d, Time: %02d:00\033[0m\n", c->day, c->time);
+	printf("\033[33mDay %d, Time: %02d:%02d\033[0m\n", currentDay(c), currentTimeHour(c), currentTimeMinute(c));
 }
 
 void handleMapMovement(t_city* c, t_player* p)
@@ -220,6 +216,7 @@ void handleResidentialRoom(t_city *c, t_player* p)
 	case 0:
 		printf("You exit the room.\n");
 		p->currentRoom = NULL;
+		addTime(c, 1);
 		break;
 
 	default:
@@ -267,6 +264,7 @@ void handleOffice(t_city* c, t_player* p)
 	case 0:
 		printf("You exit the office.\n");
 		p->currentOffice = NULL;
+		addTime(c, 1);
 		break;
 
 	default:
@@ -274,7 +272,7 @@ void handleOffice(t_city* c, t_player* p)
 	}
 }
 
-void handleResidentialFloor(t_player* p)
+void handleResidentialFloor(t_city *c, t_player* p)
 {
 	int choice;
 
@@ -307,6 +305,7 @@ void handleResidentialFloor(t_player* p)
 		}
 		choice = safeInput(1, p->currentFloor->floorTypeData.residentialFloorData->room_count);
 		p->currentRoom = p->currentFloor->floorTypeData.residentialFloorData->rooms[choice - 1];
+		addTime(c, 1);
 		break;
 
 	case 2:
@@ -333,11 +332,13 @@ void handleResidentialFloor(t_player* p)
 		if (choice == 0)
 			break ;
 		p->currentFloor = p->currentBuilding->floors[choice - 1];
+		addTime(c, 1);
 		break;
 
 	case 0:
 		printf("You exit the building.\n");
 		p->currentFloor = NULL;
+		addTime(c, 1);
 		break;
 
 	default:
@@ -345,7 +346,7 @@ void handleResidentialFloor(t_player* p)
 	}
 }
 
-void handleOfficeFloor(t_player* p)
+void handleOfficeFloor(t_city *c, t_player* p)
 {
 	int choice;
 
@@ -378,6 +379,7 @@ void handleOfficeFloor(t_player* p)
 		}
 		choice = safeInput(1, p->currentFloor->floorTypeData.officeFloorData->office_count);
 		p->currentOffice = p->currentFloor->floorTypeData.officeFloorData->offices[choice - 1];
+		addTime(c, 1);
 		break;
 
 	case 2:
@@ -404,11 +406,13 @@ void handleOfficeFloor(t_player* p)
 		if (choice == 0)
 			break ;
 		p->currentFloor = p->currentBuilding->floors[choice - 1];
+		addTime(c, 1);
 		break;
 
 	case 0:
 		printf("You exit the building.\n");
 		p->currentFloor = NULL;
+		addTime(c, 1);
 		break;
 
 	default:
@@ -424,8 +428,6 @@ void handleOutsideInteraction(t_city* c, t_player* p)
 	printTime(c);
 	printSeparator();
 	printf("You are outside at (%d, %d) in front of %s\n", p->x, p->y, p->currentBuilding->name);
-	printf("1: Enter building\n");
-	printf("2: Move on the map\n");
 	if (npcCount > 0)
 	{
 		if (npcCount == 1)
@@ -435,6 +437,8 @@ void handleOutsideInteraction(t_city* c, t_player* p)
 	}
 	else
 		printf("The street is empty.\n");
+	printf("1: Enter building\n");
+	printf("2: Move on the map\n");
 	printf("3: Talk to someone\n");
 	printf("4: Sleep on the bench\n");
 	printf("0: Exit Game\n");
@@ -466,7 +470,7 @@ void handleOutsideInteraction(t_city* c, t_player* p)
 	case 4:
 		printf("How many hours do you want to sleep? (from 1 to 12): ");
 		choice = safeInput(1, 12);
-		c->addTime(c, choice);
+		c->addTime(c, choice * 60);
 		printf("You slept for %d hours.\n", choice);
 		break;
 	case 0:
@@ -494,11 +498,11 @@ void playerControl(t_city* c, t_player* p) {
 	{
 		if (p->currentBuilding->building_type == RESIDENTIAL)
 		{
-			handleResidentialFloor(p);
+			handleResidentialFloor(c, p);
 		}
 		else if (p->currentBuilding->building_type == OFFICE)
 		{
-			handleOfficeFloor(p);
+			handleOfficeFloor(c, p);
 		}
 	}
 	else

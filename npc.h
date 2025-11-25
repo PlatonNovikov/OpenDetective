@@ -1,6 +1,11 @@
 #ifndef NPC_H
 #define NPC_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
 #include "structures.h"
 #include "city.h"
 
