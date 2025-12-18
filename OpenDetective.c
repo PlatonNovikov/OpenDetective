@@ -1,518 +1,295 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-#define PREFIX_COUNT 50
-#define BASE_COUNT 50
-#define SUFFIX_COUNT 50
-#define ARRAY_SIZE 100
-#define THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
-#define clear() printf("\033[H\033[J")
+#include "structures.h"
+#include "generators.h"
+#include "ui.h"
+#include "saveload.h"
+#include "npc.h"
+#include "city.h"
 
-const char first_names[ARRAY_SIZE][50] = {
-    "James", "Mary", "Robert", "Patricia", "John", "Jennifer", "Michael", "Linda",
-    "William", "Elizabeth", "David", "Barbara", "Richard", "Susan", "Joseph", "Jessica",
-    "Thomas", "Sarah", "Charles", "Karen", "Christopher", "Nancy", "Daniel", "Lisa",
-    "Matthew", "Betty", "Anthony", "Margaret", "Mark", "Sandra", "Donald", "Ashley",
-    "Paul", "Kimberly", "Steven", "Emily", "Andrew", "Donna", "Kenneth", "Michelle",
-    "Joshua", "Dorothy", "Kevin", "Carol", "Brian", "Rebecca", "George", "Sharon",
-    "Edward", "Laura", "Ronald", "Cynthia", "Timothy", "Kathleen", "Jason", "Amy",
-    "Jeffrey", "Shirley", "Ryan", "Angela", "Gary", "Helen", "Jacob", "Anna",
-    "Nicholas", "Brenda", "Eric", "Pamela", "Jonathan", "Nicole", "Stephen", "Samantha",
-    "Larry", "Katherine", "Justin", "Emma", "Scott", "Ruth", "Brandon", "Christine",
-    "Benjamin", "Deborah", "Samuel", "Rachel", "Frank", "Catherine", "Gregory", "Carolyn",
-    "Raymond", "Janet", "Alexander", "Maria", "Patrick", "Heather", "Jack", "Diane",
-    "Dennis", "Virginia", "Jerry", "Julie"
-    };
+void player_building_spawn(t_city* c, t_player* p){
+	for (int x = p->x; x < c->height; ++x) {
+		for (int y = (x == p->x ? p->y : 0); y < c->width; ++y) {
+			if (c->cityMap[x][y]->building_type == RESIDENTIAL) {
+				p->x = x;
+				p->y = y;
+				p->currentBuilding = c->cityMap[x][y];
+				return; // Остановка поиска
+			}
+		}
+	}
 
-const char last_names[ARRAY_SIZE][50] = {
-    "Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson",
-    "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin",
-    "Thompson", "Garcia", "Martinez", "Robinson", "Clark", "Rodriguez", "Lewis", "Lee",
-    "Walker", "Hall", "Allen", "Young", "Hernandez", "King", "Wright", "Lopez",
-    "Hill", "Scott", "Green", "Adams", "Baker", "Gonzalez", "Nelson", "Carter",
-    "Mitchell", "Perez", "Roberts", "Turner", "Phillips", "Campbell", "Parker", "Evans",
-    "Edwards", "Collins", "Stewart", "Sanchez", "Morris", "Rogers", "Reed", "Cook",
-    "Morgan", "Bell", "Murphy", "Bailey", "Rivera", "Cooper", "Richardson", "Cox",
-    "Howard", "Ward", "Torres", "Peterson", "Gray", "Ramirez", "James", "Watson",
-    "Brooks", "Kelly", "Sanders", "Price", "Bennett", "Wood", "Barnes", "Ross",
-    "Henderson", "Coleman", "Jenkins", "Perry", "Powell", "Long", "Patterson", "Hughes",
-    "Flores", "Washington", "Butler", "Simmons", "Foster", "Gonzales", "Bryant", "Alexander",
-    "Russell", "Griffin", "Diaz", "Hayes"
-    };
-
-const char *prefixes[PREFIX_COUNT] = {
-    "Sunny", "Shady", "River", "Mountain", "Blooming", "Oak", "Pine", "Maple", "Elm", "Willow",
-    "Cherry", "Apple", "Peach", "Lemon", "Orange", "Cedar", "Birch", "Spruce", "Holly", "Rosewood",
-    "Lavender", "Magnolia", "Lilac", "Palm", "Juniper", "Ash", "Chestnut", "Cottonwood", "Hickory", "Fir",
-    "Alder", "Aspen", "Beech", "Hazel", "Mulberry", "Sycamore", "Sequoia", "Redwood", "Poplar", "Cypress",
-    "Ebony", "Eucalyptus", "Yew", "Dogwood", "Honeysuckle", "Ivy", "Jasmine", "Rowan", "Elder", "Bay"
-};
-
-const char *bases[BASE_COUNT] = {
-    "Lane", "Street", "Avenue", "Boulevard", "Drive", "Way", "Court", "Place", "Road", "Terrace",
-    "Parkway", "Circle", "Crescent", "Square", "Alley", "Trail", "Close", "Row", "Esplanade", "Highway",
-    "Bridge", "Walk", "Path", "Track", "Plaza", "Garden", "Quay", "Promenade", "Vista", "Loop",
-    "Meadow", "Ridge", "Hill", "Valley", "Hollow", "Crossing", "Fork", "Glade", "Heights", "Edge",
-    "Overlook", "Harbor", "Point", "Landing", "Bay", "Bluff", "Knoll", "Oaks", "Pines", "Springs"
-};
-
-const char *suffixes[SUFFIX_COUNT] = {
-    "of Peace", "of Friendship", "of Glory", "of Victory", "of Freedom", "of Hope", "of Unity", "of Harmony", "of Joy", "of Dreams",
-    "of Stars", "of Lights", "of Rivers", "of Hills", "of Forests", "of Flowers", "of Meadows", "of Valleys", "of Creeks", "of Shores",
-    "of Haven", "of Serenity", "of Solitude", "of Grace", "of Charm", "of Wonder", "of Bliss", "of Delight", "of Tranquility", "of Bloom",
-    "of Radiance", "of Splendor", "of Majesty", "of Inspiration", "of Whimsy", "of Heritage", "of Legacy", "of Eternity", "of Fortune", "of Prosperity",
-    "of Sanctity", "of Purity", "of Courage", "of Bravery", "of Honor", "of Wisdom", "of Knowledge", "of Triumph", "of Discovery", "of Adventure"
-};
-
-char* generate_street_name() {
-    static char result[100];
-    const char *prefix = prefixes[rand() % PREFIX_COUNT];
-    const char *base = bases[rand() % BASE_COUNT];
-    const char *suffix = suffixes[rand() % SUFFIX_COUNT];
-
-    snprintf(result, sizeof(result), "%s %s %s", prefix, base, suffix);
-    return result;
+	// Если не нашли здание, начинаем заново с (0, 0)
+	for (int x = 0; x < c->height; ++x) {
+		for (int y = 0; y < c->width; ++y) {
+			if (c->cityMap[x][y]->building_type == RESIDENTIAL) {
+				p->x = x;
+				p->y = y;
+				p->currentBuilding = c->cityMap[x][y];
+				return;
+			}
+		}
+	}
 }
 
-void printMatrix(int** matrix, int height, int width) {
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            printf("%d", matrix[i][j]);
-        }
-        printf("\n");
-    }
+void start(t_city* c, t_player* p) {
+	printf("Enter city name: ");
+	scanf("%99s", c->name);
+	clear();
+	printf("Enter city width: ");
+	scanf("%d", &c->width);
+	clear();
+	printf("Enter city height: ");
+	scanf("%d", &c->height);
+	clear();
+	printf("Generating...\n");
 
+	c->addTime = addTime;
+	c->cityMap = (t_building***)calloc(c->height, sizeof(t_building**));
+	if (!c->cityMap) {
+		printf("Error allocating memory for city map.\n");
+		exit(1);
+	}
+
+	for (int i = 0; i < c->height; i++) {
+		c->cityMap[i] = (t_building**)calloc(c->width, sizeof(t_building*));
+		if (!c->cityMap[i]) {
+			printf("Error allocating memory for city map row.\n");
+			exit(1);
+		}
+
+		for (int j = 0; j < c->width; j++) {
+			t_building* b = (t_building*)calloc(1, sizeof(t_building));
+			if (!b) {
+				printf("Error allocating memory for building.\n");
+				exit(1);
+			}
+
+			snprintf(b->name, sizeof(b->name), "%s", generate_street_name());
+			b->x = i;
+			b->y = j;
+			b->height = rand() % 7 + 3; // Высота от 3 до 10 этажей
+			b->parentCity = c;
+			b->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
+			if (!b->current_npcs)
+			{
+				printf("Error allocating memory for current NPCs in building.\n");
+				free(b);
+				exit(1);
+			}
+			switch (rand()%10)
+			{
+			case 0:
+				b->building_type = OFFICE;
+				break;
+
+			default:
+				b->building_type = RESIDENTIAL;
+				break;
+			}
+
+			allocateFloors(b);
+			c->cityMap[i][j] = b;
+		}
+	}
+	c->residentialBuildings = 0;
+	c->officeBuildings = 0;
+	for (int i = 0; i < c->height; i++) {
+		for (int j = 0; j < c->width; j++) {
+			if (c->cityMap[i][j]->building_type == RESIDENTIAL) {
+				c->residentialBuildings++;
+			} else {
+				c->officeBuildings++;
+			}
+		}
+	}
+	c->residentialBuildingsList = (t_building**)calloc(c->residentialBuildings, sizeof(t_building*));
+	if (!c->residentialBuildingsList) {
+		printf("Error allocating memory for residential buildings.\n");
+		exit(1);
+	}
+	c->officeBuildingsList = (t_building**)calloc(c->officeBuildings, sizeof(t_building*));
+	if (!c->officeBuildingsList) {
+		printf("Error allocating memory for office buildings.\n");
+		exit(1);
+	}
+	int countR = 0;
+	int countO = 0;
+	for (int i = 0; i < c->height; i++) {
+		for (int j = 0; j < c->width; j++) {
+			if (c->cityMap[i][j]->building_type == RESIDENTIAL) {
+				c->residentialBuildingsList[countR] = c->cityMap[i][j];
+				countR++;
+			} else {
+				c->officeBuildingsList[countO] = c->cityMap[i][j];
+				countO++;
+			}
+		}
+	}
+	for (int i = 0; i < c->height; i++) {
+		for (int j = 0; j < c->width; j++) {
+			t_building* b = c->cityMap[i][j];
+			for (int k = 0; k < b->height; k++) {
+				if (b->floors[k]->floorType == OFFICE) {
+					for (int l = 0; l < b->floors[k]->floorTypeData.officeFloorData->office_count; l++){
+						t_office* o = b->floors[k]->floorTypeData.officeFloorData->offices[l];
+						snprintf(o->name, sizeof(o->name), "%s", generateCompanyName());
+					}
+				}
+			}
+		}
+	}
+	c->npcList = (t_npc**)calloc(MAX_NPC, sizeof(t_npc*));
+	c->npcListCount = 0;
+	populateCity(c);
+    c->time = 0;
+	c->addTime(c, 36 * 60); //start at 12:00 next day
+	p->x = rand() % c->height;
+	p->y = rand() % c->width;
+	player_building_spawn(c, p);
+	// p->currentBuilding = c->cityMap[p->x][p->y];
+	p->currentFloor = p->currentBuilding->floors[rand() % p->currentBuilding->height];
+	p->currentRoom = p->currentFloor->floorTypeData.residentialFloorData->rooms[rand() % 4];
+	p->currentOffice = NULL;
+
+	//printf("City generated successfully!\n\n");
 }
 
-typedef enum type {
-    RESIDENTIAL, // Жилой этаж
-    COMMERCIAL,  // Коммерческий этаж
-    OFFICE  // Промышленный этаж
-} type;
+void freeCity(t_city* c) {
+	if (!c) return;
 
-typedef struct npc {
-    char firstName[100];
-    char lastName[100];
-} npc;
+	for (int i = 0; i < c->height; i++) {
+		for (int j = 0; j < c->width; j++) {
+			t_building* b = c->cityMap[i][j];
+			if (!b) continue;
 
-typedef struct room {
-    npc* npc;
-    void* parentFloor;
-    int room_number;
-} room;
+			// Освобождаем этажи
+			for (int k = 0; k < b->height; k++) {
+				t_floor* f = b->floors[k];
+				if (!f) continue;
 
-typedef struct floor {
-    int floorNumber;
-    room** rooms;
-    int room_count;
-    type floor_type;
-} floor;
+				// Освобождаем данные этажа в зависимости от типа
+				switch (f->floorType) {
+					case RESIDENTIAL: {
+						t_residentialFloor* resFloor = f->floorTypeData.residentialFloorData;
+						if (resFloor) {
+							for (int l = 0; l < resFloor->room_count; l++) {
+								t_room* r = resFloor->rooms[l];
+								if (r) {
+									// Освобождаем NPC в комнате
+									if (r->npcs[0]) {
+										free(r->npcs[0]);
+									}
+									free(r->npcs); // Освобождаем массив NPC
+									free(r);       // Освобождаем саму комнату
+								}
+							}
+							free(resFloor->rooms); // Освобождаем массив комнат
+							free(resFloor);        // Освобождаем данные жилого этажа
+						}
+						break;
+					}
 
-typedef struct building {
-    char name[100];
-    int x, y;
-    int height;
-    floor** floors;
-    type building_type;
-} building;
+					case OFFICE: {
+						t_officeFloor* of = f->floorTypeData.officeFloorData;
+						if (of) {
+							for (int l = 0; l < of->office_count; l++) {
+								t_office* o = of->offices[l];
+								if (o) {
+									// Освобождаем сотрудников офиса
+									for (int m = 0; m < o->employee_count; m++) {
+										if (o->employees[m]) {
+											free(o->employees[m]);
+										}
+									}
+									free(o->employees); // Освобождаем массив сотрудников
+									free(o);            // Освобождаем сам офис
+								}
+							}
+							free(of->offices); // Освобождаем массив офисов
+							free(of);         // Освобождаем данные офисного этажа
+						}
+						break;
+					}
 
-typedef struct city {
-    char name[100];
-    int width, height;
-    building*** cityMap;
-} city;
+					default:
+						// Неизвестный тип этажа
+						break;
+				}
 
-typedef struct player {
-    int x;
-    int y;
-    building* currentBuilding;
-    floor* currentFloor;
-    room* currentRoom;
-    char name[100];
-} player;
+				free(f); // Освобождаем сам этаж
+			}
 
+			free(b->floors); // Освобождаем массив этажей
+			free(b);         // Освобождаем само здание
+		}
 
-void allocateFloors(building* b) {
-    // Выделяем память для этажей
-    b->floors = (floor**)malloc(b->height * sizeof(floor*));
-    if (!b->floors) {
-        printf("Error allocating memory for floors.\n");
-        exit(1);
-    }
+		free(c->cityMap[i]); // Освобождаем строку карты
+	}
 
-    for (int i = 0; i < b->height; i++) {
-        floor* f = (floor*)malloc(sizeof(floor));
-        if (!f) {
-            printf("Error allocating memory for floor.\n");
-            exit(1);
-        }
-        f->floorNumber = i;
+	// Освобождаем списки зданий
+	if (c->residentialBuildingsList) {
+		free(c->residentialBuildingsList);
+	}
+	if (c->officeBuildingsList) {
+		free(c->officeBuildingsList);
+	}
 
-        // Определяем тип этажа
-        switch (b->building_type) {
-        case RESIDENTIAL:
-            f->floor_type = RESIDENTIAL;
-            break;
-        case OFFICE:
-            f->floor_type = OFFICE;
-            break;
-        default:
-            printf("Unknown building type.\n");
-            free(f);
-            exit(1);
-        }
-
-        // Выделяем память для комнат
-        f->rooms = (room**)malloc(4 * sizeof(room*));
-        if (!f->rooms) {
-            printf("Error allocating memory for rooms.\n");
-            free(f);
-            exit(1);
-        }
-
-        for (int j = 0; j < 4; j++) {
-            room* r = (room*)malloc(sizeof(room));
-            if (!r) {
-                printf("Error allocating memory for room.\n");
-                for (int k = 0; k < j; k++) {
-                    free(f->rooms[k]);
-                }
-                free(f->rooms);
-                free(f);
-                exit(1);
-            }
-            r->npc = NULL;
-            r->parentFloor = f;
-            r->room_number = j;
-            f->rooms[j] = r;
-        }
-
-        b->floors[i] = f;
-    }
+	free(c->cityMap); // Освобождаем карту города
 }
 
-
-npc* generate_npc() {
-    npc* new_npc = (npc*)malloc(sizeof(npc));
-    if (!new_npc) {
-        printf("Error allocating memory for NPC.\n");
-        exit(1);
-    }
-    snprintf(new_npc->firstName, sizeof(new_npc->firstName), "%s", first_names[rand() % ARRAY_SIZE]);
-    snprintf(new_npc->lastName, sizeof(new_npc->lastName), "%s", last_names[rand() % ARRAY_SIZE]);
-    return new_npc;
+void openCMD(){
+	#if defined(_WIN32) || defined(_WIN64)
+		system("start cmd.exe /K OpenDetective.exe --child");
+	#elif defined(__linux__) || defined(__unix__)
+		if (system("which gnome-terminal > /dev/null 2>&1") == 0) {
+			system("gnome-terminal -- bash -c './OpenDetective --child; exec bash'");
+		} else if (system("which xterm > /dev/null 2>&1") == 0) {
+			system("xterm -hold -e './OpenDetective --child' &");
+		} else if (system("which konsole > /dev/null 2>&1") == 0) {
+			system("konsole --hold -e './OpenDetective --child' &");
+		} else if (system("which terminator > /dev/null 2>&1") == 0) {
+			system("terminator -e './OpenDetective --child' &");
+		} else {
+			printf("error.\n");
+		}
+	#else
+		printf("go fuck yourself\n");
+	#endif
 }
 
+int main(int argc, char *argv[])
+{
+	// if (argc < 2 || strcmp(argv[1], "--child") != 0) {
+	// 	openCMD();  // Открываем новый терминал
+	// 	return 0;   // Завершаем текущий процесс, чтобы избежать дублирования
+	// }
+	clear();
+	srand(time(NULL));
+	// srand(THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING); //debug
 
-void player_building_spawn(city* c, player* p){
-    for (int x = p->x; x < c->height; ++x) {
-        for (int y = (x == p->x ? p->y : 0); y < c->width; ++y) {
-            if (c->cityMap[x][y]->building_type == RESIDENTIAL) {
-                p->x = x;
-                p->y = y;
-                p->currentBuilding = c->cityMap[x][y];
-                return; // Остановка поиска
-            }
-        }
-    }
+	t_city c;
+	t_player p;
 
-    // Если не нашли здание, начинаем заново с (0, 0)
-    for (int x = 0; x < c->height; ++x) {
-        for (int y = 0; y < c->width; ++y) {
-            if (c->cityMap[x][y]->building_type == RESIDENTIAL) {
-                p->x = x;
-                p->y = y;
-                p->currentBuilding = c->cityMap[x][y];
-                return;
-            }
-        }
-    }
-}
+	clear();
+	printf("1: New city\n");
+	printf("2: Load save");
+	int choice;
+	printf("\nChoose an option: ");
+	scanf("%d", &choice);
+	clear();
+	if (choice == 2) {
+		loadSavefile(&c, &p);
+	} else {
+		start(&c, &p);
+	}
 
-void start(city* c, player* p) {
-    printf("Enter city name: ");
-    scanf("%99s", c->name);
-    printf("Enter city width: ");
-    scanf("%d", &c->width);
-    printf("Enter city height: ");
-    scanf("%d", &c->height);
-    printf("Generating...\n");
-
-    c->cityMap = (building***)malloc(c->height * sizeof(building**));
-    if (!c->cityMap) {
-        printf("Error allocating memory for city map.\n");
-        exit(1);
-    }
-
-    for (int i = 0; i < c->height; i++) {
-        c->cityMap[i] = (building**)malloc(c->width * sizeof(building*));
-        if (!c->cityMap[i]) {
-            printf("Error allocating memory for city map row.\n");
-            exit(1);
-        }
-
-        for (int j = 0; j < c->width; j++) {
-            building* b = (building*)malloc(sizeof(building));
-            if (!b) {
-                printf("Error allocating memory for building.\n");
-                exit(1);
-            }
-
-            snprintf(b->name, sizeof(b->name), "%s", generate_street_name());
-            b->x = i;
-            b->y = j;
-            b->height = rand() % 5 + 1; // Высота от 1 до 5 этажей
-            switch (rand()%10)
-            {
-            case 0:
-                b->building_type = OFFICE;
-                break;
-
-            default:
-                b->building_type = RESIDENTIAL;
-                break;
-            }
-
-            allocateFloors(b);
-            c->cityMap[i][j] = b;
-        }
-    }
-
-    for (int i = 0; i < c->height; i++) {
-        for (int j = 0; j < c->width; j++) {
-            building* b = c->cityMap[i][j];
-            for (int k = 0; k < b->height; k++) {
-                if (b->floors[k]->floor_type == RESIDENTIAL){
-                    for (int l = 0; l < 4; l++) {
-                        room* r = b->floors[k]->rooms[l];
-                        r->npc = generate_npc();    
-                    }     
-                }
-            }
-        }
-    }
-    p->x = rand() % c->height;
-    p->y = rand() % c->width;
-    player_building_spawn(c, p);
-    p->currentBuilding = c->cityMap[p->x][p->y];
-    p->currentFloor = p->currentBuilding->floors[rand() % p->currentBuilding->height];
-    p->currentRoom = p->currentFloor->rooms[rand() % 4];
-
-
-    printf("City generated successfully.\n");
-
-}
-
-/*void inspect_building(city* c) {
-    int x, y;
-    printf("Enter building coordinates (x y): ");
-    scanf("%d %d", &x, &y);
-    
-    if (x < 0 || x >= c->height || y < 0 || y >= c->width) {
-        printf("Invalid coordinates.\n");
-        return;
-    }
-    
-    building* b = c->cityMap[x][y];
-    printf("Building: %s\n", b->name);
-    printf("Height: %d floors\n", b->height);
-    
-    for (int i = 0; i < b->height; i++) {
-        printf(" Floor %d:\n", i + 1);
-        for (int j = 0; j < 4; j++) {
-            room r = b->floors[i]->rooms[j];
-            if (r.npc) {
-                printf("  Room %d: %s %s\n", j + 1, r.npc->firstName, r.npc->lastName);
-            } else {
-                printf("  Room %d: Empty\n", j + 1);
-            }
-        }
-    }
-}*/
-
-void playerControl(city* c, player* p) {
-    int choice;
-    
-    if (p->currentRoom) {
-        if (p->currentRoom->npc) {
-            printf("\n--- You are in %s %s's room ---\n", 
-                   p->currentRoom->npc->firstName, 
-                   p->currentRoom->npc->lastName);
-        } else {
-            printf("\n--- You are in an empty room ---\n");
-        }
-        printf("1. View Address\n");
-        printf("2. Leave the Room\n");
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
-
-        switch (choice) {
-            case 1:
-                printf("\nAddress: Building '%s', Floor %d, Room %d\n", 
-                       p->currentBuilding->name, 
-                       p->currentFloor->floorNumber + 1, 
-                       (int)(p->currentRoom->room_number) + 1);
-                break;
-            case 2:
-                printf("\nYou left the room.\n");
-                p->currentRoom = NULL;
-                break;
-            default:
-                printf("\nInvalid choice. Try again.\n");
-        }
-    } 
-    else if (p->currentFloor) {
-        printf("\n--- You are on Floor %d ---\n", p->currentFloor->floorNumber + 1);
-        printf("1. Enter a Room\n");
-        printf("2. Change Floor\n");
-        printf("3. Leave the Building\n");
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
-
-        switch (choice) {
-            case 1: {
-                printf("Enter room number (1-4): ");
-                int roomNumber;
-                scanf("%d", &roomNumber);
-
-                if (roomNumber < 1 || roomNumber > 4) {
-                    printf("\nInvalid room number. Try again.\n");
-                } else {
-                    p->currentRoom = p->currentFloor->rooms[roomNumber - 1];
-                    printf("\nYou entered Room %d.\n", roomNumber);
-                }
-                break;
-            }
-            case 2: {
-                printf("Enter floor number (1-%d): ", p->currentBuilding->height);
-                int floorNumber;
-                scanf("%d", &floorNumber);
-
-                if (floorNumber < 1 || floorNumber > p->currentBuilding->height) {
-                    printf("\nInvalid floor number. Try again.\n");
-                } else {
-                    p->currentFloor = p->currentBuilding->floors[floorNumber - 1];
-                    printf("\nYou moved to Floor %d.\n", floorNumber);
-                }
-                break;
-            }
-            case 3:
-                printf("\nYou left the building.\n");
-                p->currentFloor = NULL;
-                p->currentBuilding = NULL;
-                break;
-            default:
-                printf("\nInvalid choice. Try again.\n");
-        }
-    } 
-    else if (p->currentBuilding) {
-        printf("\n--- You are outside the building '%s' ---\n", p->currentBuilding->name);
-        printf("1. Enter a Floor\n");
-        printf("2. Leave the Building\n");
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
-
-        switch (choice) {
-            case 1: {
-                printf("Enter floor number (1-%d): ", p->currentBuilding->height);
-                int floorNumber;
-                scanf("%d", &floorNumber);
-
-                if (floorNumber < 1 || floorNumber > p->currentBuilding->height) {
-                    printf("\nInvalid floor number. Try again.\n");
-                } else {
-                    p->currentFloor = p->currentBuilding->floors[floorNumber - 1];
-                    printf("\nYou entered Floor %d.\n", floorNumber);
-                }
-                break;
-            }
-            case 2:
-                printf("\nYou left the building.\n");
-                p->currentBuilding = NULL;
-                break;
-            default:
-                printf("\nInvalid choice. Try again.\n");
-        }
-    } 
-    else {
-        printf("\n--- You are outside ---\n");
-        printf("1. Enter a Building\n");
-        printf("2. Explore the City\n");
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
-
-        switch (choice) {
-            case 1: {
-                printf("Enter building coordinates (x y): ");
-                int x, y;
-                scanf("%d %d", &x, &y);
-
-                if (x < 0 || x >= c->height || y < 0 || y >= c->width) {
-                    printf("\nInvalid coordinates. Try again.\n");
-                } else {
-                    p->currentBuilding = c->cityMap[x][y];
-                    printf("\nYou entered the building '%s'.\n", p->currentBuilding->name);
-                }
-                break;
-            }
-            case 2:
-                printf("\nYou are exploring the city...\n");
-                break;
-            default:
-                printf("\nInvalid choice. Try again.\n");
-        }
-    }
-}
-
-
-void freeCity(city* c) {
-    for (int i = 0; i < c->height; i++) {
-        for (int j = 0; j < c->width; j++) {
-            building* b = c->cityMap[i][j];
-            for (int k = 0; k < b->height; k++) {
-                for (int l = 0; l < 4; l++) {
-                    room* r = b->floors[k]->rooms[l];
-                    if (r->npc) {
-                        free(r->npc);
-                    }
-                }
-                free(b->floors[k]);
-            }
-            free(b->floors);
-            free(b);
-        }
-        free(c->cityMap[i]);
-    }
-    free(c->cityMap);
-}
-
-void printMap(city* c, player* p) {
-    for (int i = 0; i < c->height; i++) {
-        for (int j = 0; j < c->width; j++) {
-            if (p->x == i && p->y == j) {
-                printf("☺");
-            } else{
-            if (c->cityMap[i][j]) {
-                printf("⌂");
-            } else {
-                printf(" ");
-            }}
-        }
-        printf("\n");
-    }
-}
-
-int main(){
-    //srand(time(NULL));
-    srand(THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING);
-    city c;
-    player p;
-    start(&c, &p);
-    while (1) {
-        playerControl(&c, &p);
-    }
-    freeCity(&c);
-    return 0;
+	while (1) {
+		playerControl(&c, &p);
+	}
+	freeCity(&c);
+	return 0;
 }
