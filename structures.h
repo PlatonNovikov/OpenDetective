@@ -9,6 +9,13 @@
 #define SECOND_HALF_COMPANY 50
 #define MAX_NPC_PRESENT 50
 #define THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
+
+#define ROOMS_PER_FLOOR 4
+#define ASSIGNED_NPC_PER_ROOM 4
+
+#define OFFICES_PER_FLOOR 3
+#define EMPLOYEES_PER_OFFICE 5
+
 #define clear() printf("\033[H\033[J")
 
 extern const char first_names[ARRAY_SIZE][50];
@@ -43,7 +50,7 @@ typedef struct t_city t_city;
 typedef struct t_player t_player;
 
 typedef struct t_room {
-	t_npc		**npcs;          // Array of NPC pointers
+	t_npc		**assigned_npcs;          // Array of NPC pointers
 	t_npc		**current_npcs; // Currently present NPCs
 	unsigned 	npc_count;
 	unsigned 	room_number;

@@ -3,10 +3,89 @@
 //boykisser
 //writing it a year later. I have no idea why i wrote "boykisser", but im leaving it here lol
 
-// static void residential_gen(t_floor *parent_f)
-// {
+static void f_office_gen(t_floor *parent_f)
+{
+	parent_f->floorTypeData.officeFloorData = calloc(1, sizeof(t_officeFloor));
+	t_officeFloor *o_f = parent_f->floorTypeData.officeFloorData;
+	if (!o_f) {
+		printf("Error allocating memory for office floor data.\n");
+		exit(1);
+	}
+	o_f->office_count = OFFICES_PER_FLOOR;
+	o_f->parentFloor = parent_f;
+	o_f->offices = calloc(o_f->office_count, sizeof(t_office*));
+	if (!o_f->offices) {
+		printf("Error allocating memory for offices.\n");
+		exit(1);
+	}
 
-// }
+	for (unsigned i = 0; i < o_f->office_count; i++) {
+		//printf("Allocating memory for office...\n");
+		t_office *o = calloc(1, sizeof(t_office));
+		if (!o) {
+			printf("Error allocating memory for office.\n");
+			exit(1);
+		}
+		o->employee_count = 0;
+		o->employees = (t_npc**)calloc(EMPLOYEES_PER_OFFICE, sizeof(t_npc*));
+		if (!o->employees) {
+			printf("Error allocating memory for employees.\n");
+			exit(1);
+		}
+		o->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
+		if (!o->current_npcs)
+		{
+			printf("Error allocating memory for current NPCs in office.\n");
+			exit(1);
+		}
+		o->parentFloor = parent_f;
+		o->office_number = i;
+		o_f->offices[i] = o;
+	}
+}
+
+static void f_residential_gen(t_floor *parent_f)
+{
+	parent_f->floorTypeData.residentialFloorData = calloc(1, sizeof(t_residentialFloor));
+	t_residentialFloor *r_f = parent_f->floorTypeData.residentialFloorData;
+	//printf("Allocating memory for residential floor data...\n");
+	if (!r_f) {
+		printf("Error allocating memory for residential floor data.\n");
+		exit(1);
+	}
+	r_f->room_count = ROOMS_PER_FLOOR;
+	r_f->rooms = calloc(ROOMS_PER_FLOOR, sizeof(t_room*));
+	//printf("Allocating memory for rooms...\n");
+	if (!r_f->rooms) {
+		printf("Error allocating memory for rooms.\n");
+		exit(1);
+	}
+
+	for (unsigned i = 0; i < ROOMS_PER_FLOOR; i++) {
+		t_room* r = (t_room*)calloc(1, sizeof(t_room));
+		if (!r) {
+			printf("Error allocating memory for room.\n");
+			exit(1);
+		}
+		r->assigned_npcs = (t_npc**)calloc(ROOMS_PER_FLOOR, sizeof(t_npc*));
+		if (!r->assigned_npcs) {
+			printf("Error allocating memory for NPCs.\n");
+			exit(1);
+		}
+		r->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
+		if (!r->current_npcs) {
+			printf("Error allocating memory for current NPCs.\n");
+			exit(1);
+		}
+		r->npc_count = 0;
+		for(unsigned j = 0; j < ASSIGNED_NPC_PER_ROOM; j++){
+			r->assigned_npcs[j] = NULL;
+		}
+		r->parentFloor = parent_f;
+		r->room_number = i;
+		r_f->rooms[i] = r;
+	}
+}
 
 static void floor_gen(t_building *parent_b, unsigned f_number)
 {
@@ -22,124 +101,21 @@ static void floor_gen(t_building *parent_b, unsigned f_number)
 	f->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
 	if (!f->current_npcs) {
 		printf("Error allocating memory for current NPCs on floor.\n");
-		free(f);
 		exit(1);
 	}
 
 	switch (parent_b->building_type) {
 		case RESIDENTIAL:
 			f->floorType = RESIDENTIAL;
-			f->floorTypeData.residentialFloorData = (t_residentialFloor*)calloc(1, sizeof(t_residentialFloor));
-			//printf("Allocating memory for residential floor data...\n");
-			if (!f->floorTypeData.residentialFloorData) {
-				printf("Error allocating memory for residential floor data.\n");
-				free(f);
-				exit(1);
-			}
-			f->floorTypeData.residentialFloorData->room_count = 4;
-			f->floorTypeData.residentialFloorData->rooms = (t_room**)calloc(4, sizeof(t_room*));
-			//printf("Allocating memory for rooms...\n");
-			if (!f->floorTypeData.residentialFloorData->rooms) {
-				printf("Error allocating memory for rooms.\n");
-				free(f->floorTypeData.residentialFloorData);
-				free(f);
-				exit(1);
-			}
-			for (unsigned j = 0; j < 4; j++) {
-				t_room* r = (t_room*)calloc(1, sizeof(t_room));
-				if (!r) {
-					printf("Error allocating memory for room.\n");
-					for (unsigned k = 0; k < j; k++) {
-						free(f->floorTypeData.residentialFloorData->rooms[k]);
-					}
-					free(f->floorTypeData.residentialFloorData->rooms);
-					free(f->floorTypeData.residentialFloorData);
-					free(f);
-					exit(1);
-				}
-				r->npcs = (t_npc**)calloc(4, sizeof(t_npc*));
-				if (!r->npcs) {
-					printf("Error allocating memory for NPCs.\n");
-					free(r);
-					for (unsigned k = 0; k < j; k++) {
-						free(f->floorTypeData.residentialFloorData->rooms[k]);
-					}
-					free(f->floorTypeData.residentialFloorData->rooms);
-					free(f->floorTypeData.residentialFloorData);
-					free(f);
-					exit(1);
-				}
-				r->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
-				if (!r->current_npcs) {
-					printf("Error allocating memory for current NPCs.\n");
-					free(r->npcs);
-					free(r);
-					for (unsigned k = 0; k < j; k++) {
-						free(f->floorTypeData.residentialFloorData->rooms[k]);
-					}
-					free(f->floorTypeData.residentialFloorData->rooms);
-					free(f->floorTypeData.residentialFloorData);
-					free(f);
-					exit(1);
-				}
-				r->npc_count = 0;
-				for(unsigned k = 0; k < 4; k++){
-					r->npcs[k] = NULL;
-				}
-				r->parentFloor = f;
-				r->room_number = j;
-				f->floorTypeData.residentialFloorData->rooms[j] = r;
-			}
+			f_residential_gen(f);
 			break;
 
 		case OFFICE:
 			f->floorType = OFFICE;
-			//printf("Allocating memory for office floor data...\n");
-			f->floorTypeData.officeFloorData = calloc(1, sizeof(t_officeFloor));
-			if (!f->floorTypeData.officeFloorData) {
-				printf("Error allocating memory for office floor data.\n");
-				free(f);
-				exit(1);
-			}
-			t_officeFloor* of = f->floorTypeData.officeFloorData;
-			of->office_count = 3;
-			of->parentFloor = f;
-			of->offices = calloc(of->office_count, sizeof(t_office*));
-			if (!of->offices) {
-				printf("Error allocating memory for offices.\n");
-				free(of);
-				exit(1);
-			}
-
-			for (unsigned j = 0; j < of->office_count; j++) {
-				//printf("Allocating memory for office...\n");
-				of->offices[j] = calloc(1, sizeof(t_office));
-				of->offices[j]->parentFloor = f;
-				if (!of->offices[j]) {
-					printf("Error allocating memory for office.\n");
-					exit(1);
-				}
-				of->offices[j]->employee_count = 0;
-				of->offices[j]->employees = (t_npc**)calloc(5, sizeof(t_npc*));
-				if (!of->offices[j]->employees) {
-					printf("Error allocating memory for employees.\n");
-					free(of->offices[j]);
-					exit(1);
-				}
-				of->offices[j]->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
-				if (!of->offices[j]->current_npcs)
-				{
-					printf("Error allocating memory for current NPCs in office.\n");
-					free(of->offices[j]->employees);
-					free(of->offices[j]);
-					exit(1);
-				}
-				of->offices[j]->office_number = j;
-			}
+			f_office_gen(f);
 			break;
 		default:
 			printf("Unknown building type.\n");
-			free(f);
 			exit(1);
 		}
 	parent_b->floors[f_number] = f;
@@ -166,7 +142,7 @@ t_room* getFreeResidence(t_city* c){
 	unsigned floorB = floorC;
 	unsigned roomC = (unsigned)zurand() % 4;
 	unsigned roomB = roomC;
-	while (c->residentialBuildingsList[countC]->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC]->npcs[0]){
+	while (c->residentialBuildingsList[countC]->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC]->assigned_npcs[0]){
 		if (roomC < 3){
 			roomC++;
 		} else {
@@ -232,7 +208,7 @@ void populateCity(t_city* c){
 					}
 					generate_npc(new_npc, c);
 					new_npc->placeOfResidence = getFreeResidence(c);
-					new_npc->placeOfResidence->npcs[0] = new_npc;
+					new_npc->placeOfResidence->assigned_npcs[0] = new_npc;
 					new_npc->placeOfResidence->npc_count = 1;
 					new_npc->x = new_npc->placeOfResidence->parentFloor->parentBuilding->x;
 					new_npc->y = new_npc->placeOfResidence->parentFloor->parentBuilding->y;
@@ -258,7 +234,7 @@ void populateCity(t_city* c){
 					}
 					generate_family(count, family, c);
 					family[0]->placeOfResidence = getFreeResidence(c);
-					family[0]->placeOfResidence->npcs = family;
+					family[0]->placeOfResidence->assigned_npcs = family;
 					family[0]->placeOfResidence->npc_count = count;
 					for (unsigned l = 0; l < count; l++)
 					{

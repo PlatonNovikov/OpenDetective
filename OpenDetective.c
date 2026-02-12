@@ -181,10 +181,10 @@ void freeCity(t_city* c) {
 								t_room* r = resFloor->rooms[l];
 								if (r) {
 									// Освобождаем NPC в комнате
-									if (r->npcs[0]) {
-										free(r->npcs[0]);
+									if (r->assigned_npcs[0]) {
+										free(r->assigned_npcs[0]);
 									}
-									free(r->npcs); // Освобождаем массив NPC
+									free(r->assigned_npcs); // Освобождаем массив NPC
 									free(r);       // Освобождаем саму комнату
 								}
 							}

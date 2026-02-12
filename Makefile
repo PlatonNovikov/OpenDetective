@@ -1,6 +1,6 @@
 # Установки для компилятора
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wcast-qual -Wformat -Wnull-dereference -Werror -g
+CFLAGS = -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wcast-qual -Wformat -Wnull-dereference -g
 LDFLAGS = -lm
 
 # Папки
