@@ -1,6 +1,6 @@
 #include "npc.h"
 
-int rand_sanity()
+unsigned rand_sanity()
 {
 	double u = rand() / (RAND_MAX + 1.0);
 	double lambda = 4.0; // чем больше λ — тем сильнее шанс больших чисел
@@ -8,7 +8,7 @@ int rand_sanity()
 	double x = -log(1 - u) / lambda; // экспонента
 	if (x > 1.0) x = 1.0; // обрезаем до 0..1
 
-	return (100 - (int)(x * 100.0));
+	return (100 - (unsigned)(x * 100.0));
 }
 
 void generate_npc(t_npc* new_npc, t_city* c) {
@@ -50,12 +50,12 @@ void generate_npc(t_npc* new_npc, t_city* c) {
 	c->npcListCount += 1;
 }
 
-void generate_family(int count, t_npc** family, t_city* c) {
+void generate_family(unsigned count, t_npc** family, t_city* c) {
 	if (!family) {
 		printf("Error allocating memory for family.\n");
 		exit(1);
 	}
-	for (int i = 0; i < count; i++){
+	for (unsigned i = 0; i < count; i++){
 		family[i] = (t_npc*)calloc(1, sizeof(t_npc));
 		if (!family[i]) {
 			printf("Error allocating memory for NPC.\n");
@@ -65,9 +65,9 @@ void generate_family(int count, t_npc** family, t_city* c) {
 		strcpy(family[i]->lastName, family[0]->lastName);
 	}
 
-	for (int i = 0; i < count; i++){
+	for (unsigned i = 0; i < count; i++){
 		t_npc* n = family[i];
-		for (int j = 0; j < count; j++){
+		for (unsigned j = 0; j < count; j++){
 			if (i == j){
 				continue;
 			}
@@ -102,7 +102,7 @@ void gotoWork(t_npc* n){
 		n->currentFloor = NULL;
 		return ;
 	}
-	int work_x, work_y;
+	unsigned work_x, work_y;
 	work_x = n->placeOfWork->parentFloor->parentBuilding->x;
 	work_y = n->placeOfWork->parentFloor->parentBuilding->y;
 	if (n->currentBuilding->x != work_x || n->currentBuilding->y != work_y)
@@ -156,7 +156,7 @@ void gotoHome(t_npc *n)
 		n->currentFloor = NULL;
 		return ;
 	}
-	int home_x, home_y;
+	unsigned home_x, home_y;
 	home_x = n->placeOfResidence->parentFloor->parentBuilding->x;
 	home_y = n->placeOfResidence->parentFloor->parentBuilding->y;
 	if (n->currentBuilding->x != home_x || n->currentBuilding->y != home_y)

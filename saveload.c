@@ -5,8 +5,8 @@
 #include "city.h"
 #include "npc.h"
 
-void makeSavefile(t_city* c, t_player* p) {
-}
+// void makeSavefile(t_city* c, t_player* p) {
+// }
 
-void loadSavefile(t_city* c, t_player* p) {
-}
+// void loadSavefile(t_city* c, t_player* p) {
+// }

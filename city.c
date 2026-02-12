@@ -1,33 +1,32 @@
 #include "city.h"
+#include "rand/rand.h"
 //boykisser
 //writing it a year later. I have no idea why i wrote "boykisser", but im leaving it here lol
 
-void allocateFloors(t_building* b) {
-	//printf("Allocating memory for floors...\n");
-	b->floors = (t_floor**)calloc(b->height, sizeof(t_floor*));
-	if (!b->floors) {
-		printf("Error allocating memory for floors.\n");
+// static void residential_gen(t_floor *parent_f)
+// {
+
+// }
+
+static void floor_gen(t_building *parent_b, unsigned f_number)
+{
+	t_floor* f = (t_floor*)calloc(1, sizeof(t_floor));
+	if (!f) {
+		printf("Error allocating memory for floor.\n");
 		exit(1);
 	}
 
-	for (int i = 0; i < b->height; i++) {
-		t_floor* f = (t_floor*)calloc(1, sizeof(t_floor));
-		if (!f) {
-			printf("Error allocating memory for floor.\n");
-			exit(1);
-		}
-		f->floorNumber = i;
-		f->parentBuilding = b;
-		f->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
-		if (!f->current_npcs) {
-			printf("Error allocating memory for current NPCs on floor.\n");
-			free(f);
-			exit(1);
-		}
+	f->floorNumber = f_number;
+	f->parentBuilding = parent_b;
 
-		//printf("Allocating memory for floor type data...\n");
+	f->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
+	if (!f->current_npcs) {
+		printf("Error allocating memory for current NPCs on floor.\n");
+		free(f);
+		exit(1);
+	}
 
-		switch (b->building_type) {
+	switch (parent_b->building_type) {
 		case RESIDENTIAL:
 			f->floorType = RESIDENTIAL;
 			f->floorTypeData.residentialFloorData = (t_residentialFloor*)calloc(1, sizeof(t_residentialFloor));
@@ -46,11 +45,11 @@ void allocateFloors(t_building* b) {
 				free(f);
 				exit(1);
 			}
-			for (int j = 0; j < 4; j++) {
+			for (unsigned j = 0; j < 4; j++) {
 				t_room* r = (t_room*)calloc(1, sizeof(t_room));
 				if (!r) {
 					printf("Error allocating memory for room.\n");
-					for (int k = 0; k < j; k++) {
+					for (unsigned k = 0; k < j; k++) {
 						free(f->floorTypeData.residentialFloorData->rooms[k]);
 					}
 					free(f->floorTypeData.residentialFloorData->rooms);
@@ -62,7 +61,7 @@ void allocateFloors(t_building* b) {
 				if (!r->npcs) {
 					printf("Error allocating memory for NPCs.\n");
 					free(r);
-					for (int k = 0; k < j; k++) {
+					for (unsigned k = 0; k < j; k++) {
 						free(f->floorTypeData.residentialFloorData->rooms[k]);
 					}
 					free(f->floorTypeData.residentialFloorData->rooms);
@@ -75,7 +74,7 @@ void allocateFloors(t_building* b) {
 					printf("Error allocating memory for current NPCs.\n");
 					free(r->npcs);
 					free(r);
-					for (int k = 0; k < j; k++) {
+					for (unsigned k = 0; k < j; k++) {
 						free(f->floorTypeData.residentialFloorData->rooms[k]);
 					}
 					free(f->floorTypeData.residentialFloorData->rooms);
@@ -84,7 +83,7 @@ void allocateFloors(t_building* b) {
 					exit(1);
 				}
 				r->npc_count = 0;
-				for(int k = 0; k < 4; k++){
+				for(unsigned k = 0; k < 4; k++){
 					r->npcs[k] = NULL;
 				}
 				r->parentFloor = f;
@@ -96,7 +95,7 @@ void allocateFloors(t_building* b) {
 		case OFFICE:
 			f->floorType = OFFICE;
 			//printf("Allocating memory for office floor data...\n");
-			f->floorTypeData.officeFloorData = (t_officeFloor*)calloc(1, sizeof(t_officeFloor));
+			f->floorTypeData.officeFloorData = calloc(1, sizeof(t_officeFloor));
 			if (!f->floorTypeData.officeFloorData) {
 				printf("Error allocating memory for office floor data.\n");
 				free(f);
@@ -105,16 +104,16 @@ void allocateFloors(t_building* b) {
 			t_officeFloor* of = f->floorTypeData.officeFloorData;
 			of->office_count = 3;
 			of->parentFloor = f;
-			of->offices = (t_office**)calloc(of->office_count, sizeof(t_office*));
+			of->offices = calloc(of->office_count, sizeof(t_office*));
 			if (!of->offices) {
 				printf("Error allocating memory for offices.\n");
 				free(of);
 				exit(1);
 			}
 
-			for (int j = 0; j < of->office_count; j++) {
+			for (unsigned j = 0; j < of->office_count; j++) {
 				//printf("Allocating memory for office...\n");
-				of->offices[j] = (t_office*)calloc(1, sizeof(t_office));
+				of->offices[j] = calloc(1, sizeof(t_office));
 				of->offices[j]->parentFloor = f;
 				if (!of->offices[j]) {
 					printf("Error allocating memory for office.\n");
@@ -143,18 +142,30 @@ void allocateFloors(t_building* b) {
 			free(f);
 			exit(1);
 		}
-		b->floors[i] = f;
+	parent_b->floors[f_number] = f;
+}
+
+void allocateFloors(t_building* b) {
+	//printf("Allocating memory for floors...\n");
+	b->floors = (t_floor**)calloc(b->height, sizeof(t_floor*));
+	if (!b->floors) {
+		printf("Error allocating memory for floors.\n");
+		exit(1);
+	}
+
+	for (unsigned i = 0; i < b->height; i++) {
+		floor_gen(b, i);
 	}
 	//printf("Done!\n");
 }
 
 t_room* getFreeResidence(t_city* c){
-	int countC = rand() % c->residentialBuildings;
-	int countB = countC;
-	int floorC = rand() % c->residentialBuildingsList[countC]->height;
-	int floorB = floorC;
-	int roomC = rand() % 4;
-	int roomB = roomC;
+	unsigned countC = (unsigned)zurand() % c->residentialBuildings;
+	unsigned countB = countC;
+	unsigned floorC = (unsigned)zurand() % c->residentialBuildingsList[countC]->height;
+	unsigned floorB = floorC;
+	unsigned roomC = (unsigned)zurand() % 4;
+	unsigned roomB = roomC;
 	while (c->residentialBuildingsList[countC]->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC]->npcs[0]){
 		if (roomC < 3){
 			roomC++;
@@ -179,12 +190,12 @@ t_room* getFreeResidence(t_city* c){
 }
 
 t_office* getFreeWorkplace(t_city* c){
-	int countC = rand() % c->officeBuildings;
-	int countB = countC;
-	int floorC = rand() % c->officeBuildingsList[countC]->height;
-	int floorB = floorC;
-	int officeC = rand() % c->officeBuildingsList[countC]->floors[floorC]->floorTypeData.officeFloorData->office_count;
-	int officeB = officeC;
+	unsigned countC = (unsigned)zurand() % c->officeBuildings;
+	unsigned countB = countC;
+	unsigned floorC = (unsigned)zurand() % c->officeBuildingsList[countC]->height;
+	unsigned floorB = floorC;
+	unsigned officeC = (unsigned)zurand() % c->officeBuildingsList[countC]->floors[floorC]->floorTypeData.officeFloorData->office_count;
+	unsigned officeB = officeC;
 	while (c->officeBuildingsList[countC]->floors[floorC]->floorTypeData.officeFloorData->offices[officeC]->employee_count == 5){
 		if (officeC < c->officeBuildingsList[countC]->floors[floorC]->floorTypeData.officeFloorData->office_count - 1){
 			officeC++;
@@ -209,9 +220,9 @@ t_office* getFreeWorkplace(t_city* c){
 }
 
 void populateCity(t_city* c){
-	for (int i = 0; i < c->residentialBuildings; i++){
-		for (int j = 0; j < c->residentialBuildingsList[i]->height; j++){
-			for (int k = 0; k < c->residentialBuildingsList[i]->floors[j]->floorTypeData.residentialFloorData->room_count; k++){
+	for (unsigned i = 0; i < c->residentialBuildings; i++){
+		for (unsigned j = 0; j < c->residentialBuildingsList[i]->height; j++){
+			for (unsigned k = 0; k < c->residentialBuildingsList[i]->floors[j]->floorTypeData.residentialFloorData->room_count; k++){
 				t_room* r = c->residentialBuildingsList[i]->floors[j]->floorTypeData.residentialFloorData->rooms[k];
 				if(rand()%4){
 					t_npc* new_npc = (t_npc*)calloc(1, sizeof(t_npc));
@@ -240,7 +251,7 @@ void populateCity(t_city* c){
 				}
 				else{
 					t_npc** family = (t_npc**)calloc(4, sizeof(t_npc*));
-					int count = rand() % 3 + 2;
+					unsigned count = (unsigned)zurand() % 3 + 2;
 					if (!family) {
 						printf("Error allocating memory for family.\n");
 						exit(1);
@@ -249,7 +260,7 @@ void populateCity(t_city* c){
 					family[0]->placeOfResidence = getFreeResidence(c);
 					family[0]->placeOfResidence->npcs = family;
 					family[0]->placeOfResidence->npc_count = count;
-					for (int l = 0; l < count; l++)
+					for (unsigned l = 0; l < count; l++)
 					{
 						add_npc(family[l], r->current_npcs);
 						family[l]->x = family[0]->placeOfResidence->parentFloor->parentBuilding->x;
@@ -278,38 +289,38 @@ void timeManager(t_city* c)
 {
 	t_npc *n = NULL;
 
-	for (int i = 0; i < c->npcListCount; i++)
+	for (unsigned i = 0; i < c->npcListCount; i++)
 	{
 		n = c->npcList[i];
 		n->tick(n, c);
 	}
 }
 
-void addTime(t_city* c, int minutes)
+void addTime(t_city* c, unsigned minutes)
 {
-	for (int i = 0; i < minutes; i++){
+	for (unsigned i = 0; i < minutes; i++){
 		c->time += 1;
 		timeManager(c);
 	}
 }
 
-int currentDay(t_city *c) //returns current day number
+size_t currentDay(t_city *c) //returns current day number
 {
 	return (c->time / (60 * 24));
 }
 
-int currentTimeHour(t_city *c) //returns current hour
+size_t currentTimeHour(t_city *c) //returns current hour
 {
 	return ((c->time / 60) % 24);
 }
 
 
-int currentTimeMinute(t_city *c) //returns current minute
+size_t currentTimeMinute(t_city *c) //returns current minute
 {
 	return (c->time % 60);
 }
 
-int currentDayMinute(t_city *c) //returns current minute
+size_t currentDayMinute(t_city *c) //returns current minute
 {
 	return (c->time % (60 * 24));
 }

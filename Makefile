@@ -1,6 +1,6 @@
 # Установки для компилятора
 CC = gcc
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wcast-qual -Wformat -Wnull-dereference -Werror -g
 LDFLAGS = -lm
 
 # Папки
@@ -8,7 +8,8 @@ OBJ_DIR = obj
 BIN_DIR = bin
 
 # Исходные и объектные файлы
-SRC = structures.c city.c npc.c generators.c saveload.c ui.c OpenDetective.c
+SRC =	structures.c city.c npc.c generators.c saveload.c ui.c OpenDetective.c \
+		rand/zurand.c
 OBJ = $(SRC:%.c=$(OBJ_DIR)/%.o)
 
 # Имя конечной программы
@@ -24,7 +25,7 @@ $(TARGET): $(OBJ)
 
 # Правило для компиляции каждого .c файла в .o
 $(OBJ_DIR)/%.o: %.c
-	@mkdir -p $(OBJ_DIR)  # Создаём папку obj, если её нет
+	@mkdir -p $(dir $@)  # Создаём папку obj, если её нет
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Команда для запуска программы
@@ -42,6 +43,8 @@ clean-obj:
 # Очистка только исполнимого файла
 clean-bin:
 	rm -rf $(BIN_DIR)
+
+re: clean all
 
 # Псевдоним для очистки
 .PHONY: all clean clean-obj clean-bin run

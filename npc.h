@@ -24,29 +24,29 @@ typedef enum e_relationship_type {
 typedef struct t_relationship {
 	t_npc				*target;	// Pointer to the related NPC
 	e_relationship_type	type;		// Type of relationship
-	int					strength;	// 0-100 (e.g., closeness, trust)
-	int					count;		// Number of interactions
+	unsigned			strength;	// 0-100 (e.g., closeness, trust)
+	unsigned			count;		// Number of interactions
 } t_relationship;
 
 typedef struct t_schedule {
-	int	work_start;
-	int	work_end;
+	unsigned	work_start;
+	unsigned	work_end;
 } t_schedule;
 
 typedef struct t_leg{
-	int health;
+	unsigned health;
 } t_leg;
 
 typedef struct t_arm{
-	int health;
+	unsigned health;
 } t_arm;
 
 typedef struct t_head{
-	int health;
+	unsigned health;
 } t_head;
 
 typedef struct t_torso{
-	int health;
+	unsigned health;
 } t_torso;
 
 typedef enum e_eye_color {
@@ -87,7 +87,7 @@ typedef struct t_npc {
 	char			lastName[100];
 	t_room			*placeOfResidence;
 	t_office		*placeOfWork;
-	int 			x,y;
+	unsigned 		x,y;
 	t_building		*currentBuilding;
 	t_floor			*currentFloor;
 	t_room			*currentRoom;
@@ -95,8 +95,8 @@ typedef struct t_npc {
 	int				isAlive;
 
 	t_relationship	*relationships; // Dynamic array of relationships
-	int				relationshipCount;
-	int				sanity;         // 0-100
+	unsigned		relationshipCount;
+	unsigned		sanity;         // 0-100
 
 	t_schedule		*dailySchedule;
 
@@ -119,7 +119,7 @@ typedef struct t_npc {
 
 void generate_npc(t_npc* new_npc, t_city* c);
 
-void generate_family(int count, t_npc** family, t_city* c);
+void generate_family(unsigned count, t_npc** family, t_city* c);
 
 void gotoWork(t_npc* n);
 
