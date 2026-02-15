@@ -1,6 +1,6 @@
-#include "ui.h"
+#include "../include/ui.h"
 
-void printMap(t_city* c, t_player* p)
+static void printMap(t_city* c, t_player* p)
 {
 	printf("\n\033[36m%s City Map\033[0m\n", c->name); // Cyan city name
 	printf("╔");
@@ -56,18 +56,18 @@ void printMap(t_city* c, t_player* p)
 	printf("\n\033[33mLegend:\033[0m ☺=You | ⌂=Home | F=Office | ·=Empty\n\n");
 }
 
-void printSeparator()
+static void printSeparator()
 {
 	printf("\n\033[35m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n");
 }
 
-void clearInputBuffer()
+static void clearInputBuffer()
 {
 	int c;
 	while ((c = getchar()) != '\n' && c != EOF);
 }
 
-unsigned safeInput_u(unsigned min, unsigned max)
+static unsigned safeInput_u(unsigned min, unsigned max)
 {
 	unsigned choice;
 	while(1) {
@@ -83,7 +83,7 @@ unsigned safeInput_u(unsigned min, unsigned max)
 }
 
 //returns the number of NPCs in the npcList
-unsigned getNpcs(t_npc** npcList)
+static unsigned getNpcs(t_npc** npcList)
 {
 	unsigned count = 0;
 	while ((npcList[count] != NULL) && (count < MAX_NPC)) {
@@ -93,7 +93,7 @@ unsigned getNpcs(t_npc** npcList)
 }
 
 //prints the list of NPCs in the npcList
-void listNpcs(t_npc** npcList, unsigned startIndex)
+static void listNpcs(t_npc** npcList, unsigned startIndex)
 {
 	unsigned count = getNpcs(npcList);
 	for (unsigned i = 0; i < count; i++) {
@@ -101,11 +101,11 @@ void listNpcs(t_npc** npcList, unsigned startIndex)
 	}
 }
 
-void printTime(t_city* c) {
+static void printTime(t_city* c) {
 	printf("\033[33mDay %ld, Time: %02ld:%02ld\033[0m\n", currentDay(c), currentTimeHour(c), currentTimeMinute(c));
 }
 
-void handleMapMovement(t_city* c, t_player* p)
+static void handleMapMovement(t_city* c, t_player* p)
 {
 	unsigned choice;
 
@@ -152,7 +152,7 @@ void handleMapMovement(t_city* c, t_player* p)
 	c->addTime(c, 1);
 }
 
-void handleDialogue(t_player* p, t_npc* n)
+static void handleDialogue(t_player* p, t_npc* n)
 {
 	unsigned choice;
 
@@ -176,7 +176,7 @@ void handleDialogue(t_player* p, t_npc* n)
 	}
 }
 
-void handleResidentialRoom(t_city *c, t_player* p)
+static void handleResidentialRoom(t_city *c, t_player* p)
 {
 	unsigned		choice;
 	const unsigned	npcCount = getNpcs(p->currentRoom->current_npcs);
@@ -224,7 +224,7 @@ void handleResidentialRoom(t_city *c, t_player* p)
 	}
 }
 
-void handleOffice(t_city* c, t_player* p)
+static void handleOffice(t_city* c, t_player* p)
 {
 	unsigned		choice;
 	const unsigned	npcCount = getNpcs(p->currentOffice->current_npcs);
@@ -272,7 +272,7 @@ void handleOffice(t_city* c, t_player* p)
 	}
 }
 
-void handleResidentialFloor(t_city *c, t_player* p)
+static void handleResidentialFloor(t_city *c, t_player* p)
 {
 	unsigned		choice;
 	const unsigned	npcCount = getNpcs(p->currentFloor->current_npcs);
@@ -346,7 +346,7 @@ void handleResidentialFloor(t_city *c, t_player* p)
 	}
 }
 
-void handleOfficeFloor(t_city *c, t_player* p)
+static void handleOfficeFloor(t_city *c, t_player* p)
 {
 	unsigned choice;
 	const unsigned	npcCount = getNpcs(p->currentFloor->current_npcs);
@@ -420,7 +420,7 @@ void handleOfficeFloor(t_city *c, t_player* p)
 	}
 }
 
-void handleOutsideInteraction(t_city* c, t_player* p)
+static void handleOutsideInteraction(t_city* c, t_player* p)
 {
 	unsigned		choice;
 	const unsigned	npcCount = getNpcs(p->currentBuilding->current_npcs);

@@ -8,8 +8,14 @@ OBJ_DIR = obj
 BIN_DIR = bin
 
 # Исходные и объектные файлы
-SRC =	structures.c city.c npc.c generators.c saveload.c ui.c OpenDetective.c \
-		rand/zurand.c
+SRC =	src/structures.c \
+		src/city.c \
+		src/npc.c \
+		src/generators.c \
+		src/saveload.c \
+		src/ui.c \
+		src/OpenDetective.c \
+		src/rand/zurand.c
 OBJ = $(SRC:%.c=$(OBJ_DIR)/%.o)
 
 # Имя конечной программы

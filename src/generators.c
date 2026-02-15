@@ -1,4 +1,4 @@
-#include "generators.h"
+#include "../include/generators.h"
 
 char* generateCompanyName() {
 	// Аллоцируем память для названия

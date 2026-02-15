@@ -1,4 +1,4 @@
-#include "structures.h"
+#include "../include/structures.h"
 
 const char first_names[ARRAY_SIZE][50] = {
 	"James", "Mary", "Robert", "Patricia", "John", "Jennifer", "Michael", "Linda",

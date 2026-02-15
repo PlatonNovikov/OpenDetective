@@ -1,5 +1,5 @@
-#include "city.h"
-#include "rand/rand.h"
+#include "../include/city.h"
+#include "../include/rand.h"
 //boykisser
 //writing it a year later. I have no idea why i wrote "boykisser", but im leaving it here lol
 

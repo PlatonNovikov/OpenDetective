@@ -3,13 +3,13 @@
 #include <string.h>
 #include <time.h>
 
-#include "structures.h"
-#include "generators.h"
-#include "ui.h"
-#include "saveload.h"
-#include "npc.h"
-#include "city.h"
-#include "rand/rand.h"
+#include "../include/structures.h"
+#include "../include/generators.h"
+#include "../include/ui.h"
+#include "../include/saveload.h"
+#include "../include/npc.h"
+#include "../include/city.h"
+#include "../include/rand.h"
 
 void player_building_spawn(t_city* c, t_player* p){
 	for (unsigned x = p->x; x < c->height; ++x) {
@@ -49,21 +49,21 @@ void start(t_city* c, t_player* p) {
 	printf("Generating...\n");
 
 	c->addTime = addTime;
-	c->cityMap = (t_building***)calloc(c->height, sizeof(t_building**));
+	c->cityMap = calloc(c->height, sizeof(t_building**));
 	if (!c->cityMap) {
 		printf("Error allocating memory for city map.\n");
 		exit(1);
 	}
 
 	for (unsigned i = 0; i < c->height; i++) {
-		c->cityMap[i] = (t_building**)calloc(c->width, sizeof(t_building*));
+		c->cityMap[i] = calloc(c->width, sizeof(t_building*));
 		if (!c->cityMap[i]) {
 			printf("Error allocating memory for city map row.\n");
 			exit(1);
 		}
 
 		for (unsigned j = 0; j < c->width; j++) {
-			t_building* b = (t_building*)calloc(1, sizeof(t_building));
+			t_building* b = calloc(1, sizeof(t_building));
 			if (!b) {
 				printf("Error allocating memory for building.\n");
 				exit(1);
@@ -74,7 +74,7 @@ void start(t_city* c, t_player* p) {
 			b->y = j;
 			b->height = (unsigned)rand() % 7 + 3; // Высота от 3 до 10 этажей
 			b->parentCity = c;
-			b->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
+			b->current_npcs = calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
 			if (!b->current_npcs)
 			{
 				printf("Error allocating memory for current NPCs in building.\n");
@@ -107,12 +107,12 @@ void start(t_city* c, t_player* p) {
 			}
 		}
 	}
-	c->residentialBuildingsList = (t_building**)calloc(c->residentialBuildings, sizeof(t_building*));
+	c->residentialBuildingsList = calloc(c->residentialBuildings, sizeof(t_building*));
 	if (!c->residentialBuildingsList) {
 		printf("Error allocating memory for residential buildings.\n");
 		exit(1);
 	}
-	c->officeBuildingsList = (t_building**)calloc(c->officeBuildings, sizeof(t_building*));
+	c->officeBuildingsList = calloc(c->officeBuildings, sizeof(t_building*));
 	if (!c->officeBuildingsList) {
 		printf("Error allocating memory for office buildings.\n");
 		exit(1);
