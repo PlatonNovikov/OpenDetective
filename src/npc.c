@@ -14,14 +14,14 @@ unsigned rand_sanity()
 void generate_npc(t_npc* new_npc, t_city* c) {
 	snprintf(new_npc->firstName, sizeof(new_npc->firstName), "%s", first_names[rand() % ARRAY_SIZE]);
 	snprintf(new_npc->lastName, sizeof(new_npc->lastName), "%s", last_names[rand() % ARRAY_SIZE]);
-	new_npc->relationships = (t_relationship*)calloc(MAX_RELATIONSHIPS, sizeof(t_relationship));
+	new_npc->relationships = calloc(MAX_RELATIONSHIPS, sizeof(t_relationship));
 	if (!new_npc->relationships) {
 		printf("Error allocating memory for relationships.\n");
 		free(new_npc);
 		exit(1);
 	}
 	new_npc->relationshipCount = 0;
-	new_npc->dailySchedule = (t_schedule*)calloc(1, sizeof(t_schedule));
+	new_npc->dailySchedule = calloc(1, sizeof(t_schedule));
 	if (!new_npc->dailySchedule)
 	{
 		printf("Error allocating memory for daily schedule.\n");

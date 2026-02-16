@@ -1,6 +1,8 @@
 #ifndef STRUCTURES_H
 #define STRUCTURES_H
 
+#include "vector.h"
+
 #define PREFIX_COUNT 50
 #define BASE_COUNT 50
 #define SUFFIX_COUNT 50
