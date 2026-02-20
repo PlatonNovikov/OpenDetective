@@ -119,14 +119,10 @@ typedef struct t_npc {
 
 void generate_npc(t_npc* new_npc, t_city* c);
 
-void generate_family(unsigned count, t_npc** family, t_city* c);
+void generate_family(unsigned count, t_vec* family, t_city* c);
 
 void gotoWork(t_npc* n);
 
 void npc_tick(t_npc* n, t_city* c);
-
-void add_npc(t_npc *n, t_npc **npc_list);
-
-void remove_npc(t_npc *n, t_npc **npc_list);
 
 #endif

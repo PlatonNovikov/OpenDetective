@@ -6,6 +6,7 @@
 
 #include "structures.h"
 #include "npc.h"
+#include "vector.h"
 
 #define MAX_NPC 10000
 typedef struct t_city {

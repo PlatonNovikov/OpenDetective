@@ -1,5 +1,6 @@
 #include "../include/city.h"
 #include "../include/rand.h"
+#include "../include/vector.h"
 //boykisser
 //writing it a year later. I have no idea why i wrote "boykisser", but im leaving it here lol
 
@@ -32,12 +33,7 @@ static void f_office_gen(t_floor *parent_f)
 			printf("Error allocating memory for employees.\n");
 			exit(1);
 		}
-		o->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
-		if (!o->current_npcs)
-		{
-			printf("Error allocating memory for current NPCs in office.\n");
-			exit(1);
-		}
+		o->current_npcs = init_vec();
 		o->parentFloor = parent_f;
 		o->office_number = i;
 		o_f->offices[i] = o;
@@ -67,20 +63,17 @@ static void f_residential_gen(t_floor *parent_f)
 			printf("Error allocating memory for room.\n");
 			exit(1);
 		}
-		r->assigned_npcs = (t_npc**)calloc(ROOMS_PER_FLOOR, sizeof(t_npc*));
+		r->assigned_npcs = init_vec();
 		if (!r->assigned_npcs) {
 			printf("Error allocating memory for NPCs.\n");
 			exit(1);
 		}
-		r->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
+		r->current_npcs = init_vec();
 		if (!r->current_npcs) {
 			printf("Error allocating memory for current NPCs.\n");
 			exit(1);
 		}
 		r->npc_count = 0;
-		for(unsigned j = 0; j < ASSIGNED_NPC_PER_ROOM; j++){
-			r->assigned_npcs[j] = NULL;
-		}
 		r->parentFloor = parent_f;
 		r->room_number = i;
 		r_f->rooms[i] = r;
@@ -98,11 +91,7 @@ static void floor_gen(t_building *parent_b, unsigned f_number)
 	f->floorNumber = f_number;
 	f->parentBuilding = parent_b;
 
-	f->current_npcs = (t_npc**)calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
-	if (!f->current_npcs) {
-		printf("Error allocating memory for current NPCs on floor.\n");
-		exit(1);
-	}
+	f->current_npcs = init_vec();
 
 	switch (parent_b->building_type) {
 		case RESIDENTIAL:
@@ -142,7 +131,7 @@ t_room* getFreeResidence(t_city* c){
 	unsigned floorB = floorC;
 	unsigned roomC = (unsigned)zurand() % 4;
 	unsigned roomB = roomC;
-	while (c->residentialBuildingsList[countC]->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC]->assigned_npcs[0]){
+	while (vec_get(c->residentialBuildingsList[countC]->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC]->assigned_npcs->data, 0)){
 		if (roomC < 3){
 			roomC++;
 		} else {
@@ -208,7 +197,7 @@ void populateCity(t_city* c){
 					}
 					generate_npc(new_npc, c);
 					new_npc->placeOfResidence = getFreeResidence(c);
-					new_npc->placeOfResidence->assigned_npcs[0] = new_npc;
+					vec_append(new_npc->placeOfResidence->assigned_npcs, new_npc);
 					new_npc->placeOfResidence->npc_count = 1;
 					new_npc->x = new_npc->placeOfResidence->parentFloor->parentBuilding->x;
 					new_npc->y = new_npc->placeOfResidence->parentFloor->parentBuilding->y;
@@ -216,7 +205,7 @@ void populateCity(t_city* c){
 					new_npc->currentRoom = new_npc->placeOfResidence;
 					new_npc->currentFloor = new_npc->placeOfResidence->parentFloor;
 					new_npc->currentBuilding = new_npc->placeOfResidence->parentFloor->parentBuilding;
-					add_npc(new_npc, r->current_npcs);
+					vec_append(r->current_npcs, new_npc);
 					if (new_npc->placeOfWork)
 					{
 						new_npc->placeOfWork->employees[new_npc->placeOfWork->employee_count] = new_npc;
@@ -226,32 +215,28 @@ void populateCity(t_city* c){
 					}
 				}
 				else{
-					t_npc** family = (t_npc**)calloc(4, sizeof(t_npc*));
+					t_vec* family = r->assigned_npcs;
 					unsigned count = (unsigned)zurand() % 3 + 2;
-					if (!family) {
-						printf("Error allocating memory for family.\n");
-						exit(1);
-					}
 					generate_family(count, family, c);
-					family[0]->placeOfResidence = getFreeResidence(c);
-					family[0]->placeOfResidence->assigned_npcs = family;
-					family[0]->placeOfResidence->npc_count = count;
+					((t_npc *)family->data[0])->placeOfResidence = getFreeResidence(c);
+					((t_npc *)family->data[0])->placeOfResidence->assigned_npcs = family;
+					((t_npc *)family->data[0])->placeOfResidence->npc_count = count;
 					for (unsigned l = 0; l < count; l++)
 					{
-						add_npc(family[l], r->current_npcs);
-						family[l]->x = family[0]->placeOfResidence->parentFloor->parentBuilding->x;
-						family[l]->y = family[0]->placeOfResidence->parentFloor->parentBuilding->y;
-						family[l]->placeOfResidence = family[0]->placeOfResidence;
-						family[l]->placeOfWork = getFreeWorkplace(c);
-						family[l]->currentRoom = r;
-						family[l]->currentFloor = family[l]->placeOfResidence->parentFloor;
-						family[l]->currentBuilding = family[l]->placeOfResidence->parentFloor->parentBuilding;
-						if (family[l]->placeOfWork)
+						vec_append(r->current_npcs, family->data[l]);
+						((t_npc *)family->data[l])->x = ((t_npc *)family->data[0])->placeOfResidence->parentFloor->parentBuilding->x;
+						((t_npc *)family->data[l])->y = ((t_npc *)family->data[0])->placeOfResidence->parentFloor->parentBuilding->y;
+						((t_npc *)family->data[l])->placeOfResidence = ((t_npc *)family->data[0])->placeOfResidence;
+						((t_npc *)family->data[l])->placeOfWork = getFreeWorkplace(c);
+						((t_npc *)family->data[l])->currentRoom = r;
+						((t_npc *)family->data[l])->currentFloor = ((t_npc *)family->data[l])->placeOfResidence->parentFloor;
+						((t_npc *)family->data[l])->currentBuilding = ((t_npc *)family->data[l])->placeOfResidence->parentFloor->parentBuilding;
+						if (((t_npc *)family->data[l])->placeOfWork)
 						{
-							family[l]->placeOfWork->employees[family[l]->placeOfWork->employee_count] = family[l];
-							family[l]->placeOfWork->employee_count++;
-							family[l]->dailySchedule->work_start = 9 * 60;	//9:00
-							family[l]->dailySchedule->work_end = 17 * 60;	//17:00
+							((t_npc *)family->data[l])->placeOfWork->employees[((t_npc *)family->data[l])->placeOfWork->employee_count] = ((t_npc *)family->data[l]);
+							((t_npc *)family->data[l])->placeOfWork->employee_count++;
+							((t_npc *)family->data[l])->dailySchedule->work_start = 9 * 60;	//9:00
+							((t_npc *)family->data[l])->dailySchedule->work_end = 17 * 60;	//17:00
 						}
 					}
 

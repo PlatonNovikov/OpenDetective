@@ -160,86 +160,86 @@ void start(t_city* c, t_player* p) {
 }
 
 void freeCity(t_city* c) {
-	if (!c) return;
+	// if (!c) return;
 
-	for (unsigned i = 0; i < c->height; i++) {
-		for (unsigned j = 0; j < c->width; j++) {
-			t_building* b = c->cityMap[i][j];
-			if (!b) continue;
+	// for (unsigned i = 0; i < c->height; i++) {
+	// 	for (unsigned j = 0; j < c->width; j++) {
+	// 		t_building* b = c->cityMap[i][j];
+	// 		if (!b) continue;
 
-			// Освобождаем этажи
-			for (unsigned k = 0; k < b->height; k++) {
-				t_floor* f = b->floors[k];
-				if (!f) continue;
+	// 		// Освобождаем этажи
+	// 		for (unsigned k = 0; k < b->height; k++) {
+	// 			t_floor* f = b->floors[k];
+	// 			if (!f) continue;
 
-				// Освобождаем данные этажа в зависимости от типа
-				switch (f->floorType) {
-					case RESIDENTIAL: {
-						t_residentialFloor* resFloor = f->floorTypeData.residentialFloorData;
-						if (resFloor) {
-							for (unsigned l = 0; l < resFloor->room_count; l++) {
-								t_room* r = resFloor->rooms[l];
-								if (r) {
-									// Освобождаем NPC в комнате
-									if (r->assigned_npcs[0]) {
-										free(r->assigned_npcs[0]);
-									}
-									free(r->assigned_npcs); // Освобождаем массив NPC
-									free(r);       // Освобождаем саму комнату
-								}
-							}
-							free(resFloor->rooms); // Освобождаем массив комнат
-							free(resFloor);        // Освобождаем данные жилого этажа
-						}
-						break;
-					}
+	// 			// Освобождаем данные этажа в зависимости от типа
+	// 			switch (f->floorType) {
+	// 				case RESIDENTIAL: {
+	// 					t_residentialFloor* resFloor = f->floorTypeData.residentialFloorData;
+	// 					if (resFloor) {
+	// 						for (unsigned l = 0; l < resFloor->room_count; l++) {
+	// 							t_room* r = resFloor->rooms[l];
+	// 							if (r) {
+	// 								// Освобождаем NPC в комнате
+	// 								if (r->assigned_npcs[0]) {
+	// 									free(r->assigned_npcs[0]);
+	// 								}
+	// 								free(r->assigned_npcs); // Освобождаем массив NPC
+	// 								free(r);       // Освобождаем саму комнату
+	// 							}
+	// 						}
+	// 						free(resFloor->rooms); // Освобождаем массив комнат
+	// 						free(resFloor);        // Освобождаем данные жилого этажа
+	// 					}
+	// 					break;
+	// 				}
 
-					case OFFICE: {
-						t_officeFloor* of = f->floorTypeData.officeFloorData;
-						if (of) {
-							for (unsigned l = 0; l < of->office_count; l++) {
-								t_office* o = of->offices[l];
-								if (o) {
-									// Освобождаем сотрудников офиса
-									for (unsigned m = 0; m < o->employee_count; m++) {
-										if (o->employees[m]) {
-											free(o->employees[m]);
-										}
-									}
-									free(o->employees); // Освобождаем массив сотрудников
-									free(o);            // Освобождаем сам офис
-								}
-							}
-							free(of->offices); // Освобождаем массив офисов
-							free(of);         // Освобождаем данные офисного этажа
-						}
-						break;
-					}
+	// 				case OFFICE: {
+	// 					t_officeFloor* of = f->floorTypeData.officeFloorData;
+	// 					if (of) {
+	// 						for (unsigned l = 0; l < of->office_count; l++) {
+	// 							t_office* o = of->offices[l];
+	// 							if (o) {
+	// 								// Освобождаем сотрудников офиса
+	// 								for (unsigned m = 0; m < o->employee_count; m++) {
+	// 									if (o->employees[m]) {
+	// 										free(o->employees[m]);
+	// 									}
+	// 								}
+	// 								free(o->employees); // Освобождаем массив сотрудников
+	// 								free(o);            // Освобождаем сам офис
+	// 							}
+	// 						}
+	// 						free(of->offices); // Освобождаем массив офисов
+	// 						free(of);         // Освобождаем данные офисного этажа
+	// 					}
+	// 					break;
+	// 				}
 
-					default:
-						// Неизвестный тип этажа
-						break;
-				}
+	// 				default:
+	// 					// Неизвестный тип этажа
+	// 					break;
+	// 			}
 
-				free(f); // Освобождаем сам этаж
-			}
+	// 			free(f); // Освобождаем сам этаж
+	// 		}
 
-			free(b->floors); // Освобождаем массив этажей
-			free(b);         // Освобождаем само здание
-		}
+	// 		free(b->floors); // Освобождаем массив этажей
+	// 		free(b);         // Освобождаем само здание
+	// 	}
 
-		free(c->cityMap[i]); // Освобождаем строку карты
-	}
+	// 	free(c->cityMap[i]); // Освобождаем строку карты
+	// }
 
-	// Освобождаем списки зданий
-	if (c->residentialBuildingsList) {
-		free(c->residentialBuildingsList);
-	}
-	if (c->officeBuildingsList) {
-		free(c->officeBuildingsList);
-	}
+	// // Освобождаем списки зданий
+	// if (c->residentialBuildingsList) {
+	// 	free(c->residentialBuildingsList);
+	// }
+	// if (c->officeBuildingsList) {
+	// 	free(c->officeBuildingsList);
+	// }
 
-	free(c->cityMap); // Освобождаем карту города
+	// free(c->cityMap); // Освобождаем карту города
 }
 
 void openCMD(){

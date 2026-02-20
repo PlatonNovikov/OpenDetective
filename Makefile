@@ -1,6 +1,6 @@
 # Установки для компилятора
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wcast-qual -Wformat -Wnull-dereference -g
+CFLAGS = -Wall -Wextra -g
 LDFLAGS = -lm
 
 # Папки
@@ -15,7 +15,8 @@ SRC =	src/structures.c \
 		src/saveload.c \
 		src/ui.c \
 		src/OpenDetective.c \
-		src/rand/zurand.c
+		src/rand/zurand.c \
+		src/vector/vector.c
 OBJ = $(SRC:%.c=$(OBJ_DIR)/%.o)
 
 # Имя конечной программы

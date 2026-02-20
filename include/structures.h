@@ -52,8 +52,8 @@ typedef struct t_city t_city;
 typedef struct t_player t_player;
 
 typedef struct t_room {
-	t_npc		**assigned_npcs;          // Array of NPC pointers
-	t_npc		**current_npcs; // Currently present NPCs
+	t_vec		*assigned_npcs; // (t_npc *) Array of NPC pointers
+	t_vec		*current_npcs;  // (t_npc *) Currently present NPCs
 	unsigned 	npc_count;
 	unsigned 	room_number;
 	t_floor		*parentFloor;
@@ -71,7 +71,7 @@ typedef struct t_office{
 	unsigned	employee_count;
 	t_floor		*parentFloor;
 	unsigned	office_number;
-	t_npc		**current_npcs; // Currently present NPCs
+	t_vec		*current_npcs;  // (t_npc *) Currently present NPCs
 } t_office;
 
 typedef struct t_officeFloor{
@@ -88,7 +88,7 @@ typedef struct t_floor {
 	} floorTypeData;
 	e_type					floorType;
 	t_building				*parentBuilding;
-	t_npc					**current_npcs; // Currently present NPCs
+	t_vec					*current_npcs;  // (t_npc *) Currently present NPCs
 } t_floor;
 
 typedef struct t_building {
@@ -98,7 +98,7 @@ typedef struct t_building {
 	t_floor		**floors;
 	t_city		*parentCity;
 	e_type		building_type;
-	t_npc		**current_npcs; // Currently present NPCs
+	t_vec		*current_npcs;  // (t_npc *) Currently present NPCs
 } t_building;
 
 typedef struct t_player {

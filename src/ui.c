@@ -82,22 +82,14 @@ static unsigned safeInput_u(unsigned min, unsigned max)
 	}
 }
 
-//returns the number of NPCs in the npcList
-static unsigned getNpcs(t_npc** npcList)
-{
-	unsigned count = 0;
-	while ((npcList[count] != NULL) && (count < MAX_NPC)) {
-		count++;
-	}
-	return count;
-}
-
 //prints the list of NPCs in the npcList
-static void listNpcs(t_npc** npcList, unsigned startIndex)
+static void listNpcs(t_vec *npcList, unsigned startIndex)
 {
-	unsigned count = getNpcs(npcList);
-	for (unsigned i = 0; i < count; i++) {
-		printf("%u: %s %s\n", i + 1 + startIndex, npcList[i]->firstName, npcList[i]->lastName);
+	size_t count = npcList->size;
+	t_npc	*n = NULL;
+	for (size_t i = 0; i < count; i++) {
+		n = ((t_npc **)npcList->data)[i];
+		printf("%lu: %s %s\n", i + 1 + startIndex, n->firstName, n->lastName);
 	}
 }
 
@@ -179,7 +171,7 @@ static void handleDialogue(t_player* p, t_npc* n)
 static void handleResidentialRoom(t_city *c, t_player* p)
 {
 	unsigned		choice;
-	const unsigned	npcCount = getNpcs(p->currentRoom->current_npcs);
+	const size_t	npcCount = p->currentRoom->current_npcs->size;
 
 	printTime(c);
 	printSeparator();
@@ -189,7 +181,7 @@ static void handleResidentialRoom(t_city *c, t_player* p)
 		if (npcCount == 1)
 			printf("There is 1 person here\n");
 		else
-			printf("There are %d people here\n", npcCount);
+			printf("There are %ld people here\n", npcCount);
 	}
 	else
 		printf("The room is empty.\n");
@@ -210,7 +202,7 @@ static void handleResidentialRoom(t_city *c, t_player* p)
 		choice = safeInput_u(0, npcCount);
 		if (choice == 0)
 			break ;
-		handleDialogue(p, p->currentRoom->current_npcs[choice - 1]);
+		handleDialogue(p, p->currentRoom->current_npcs->data[choice - 1]);
 		break;
 
 	case 0:
@@ -227,7 +219,7 @@ static void handleResidentialRoom(t_city *c, t_player* p)
 static void handleOffice(t_city* c, t_player* p)
 {
 	unsigned		choice;
-	const unsigned	npcCount = getNpcs(p->currentOffice->current_npcs);
+	const unsigned	npcCount = p->currentOffice->current_npcs->size;
 
 	printTime(c);
 	printSeparator();
@@ -258,7 +250,7 @@ static void handleOffice(t_city* c, t_player* p)
 		choice = safeInput_u(0, npcCount);
 		if (choice == 0)
 			break ;
-		handleDialogue(p, p->currentOffice->current_npcs[choice - 1]);
+		handleDialogue(p, p->currentOffice->current_npcs->data[choice - 1]);
 		break;
 
 	case 0:
@@ -275,7 +267,7 @@ static void handleOffice(t_city* c, t_player* p)
 static void handleResidentialFloor(t_city *c, t_player* p)
 {
 	unsigned		choice;
-	const unsigned	npcCount = getNpcs(p->currentFloor->current_npcs);
+	const unsigned	npcCount = p->currentFloor->current_npcs->size;
 
 	printTime(p->currentBuilding->parentCity);
 	printSeparator();
@@ -319,7 +311,7 @@ static void handleResidentialFloor(t_city *c, t_player* p)
 		choice = safeInput_u(0, npcCount);
 		if (choice == 0)
 			break ;
-		handleDialogue(p, p->currentFloor->current_npcs[choice - 1]);
+		handleDialogue(p, p->currentFloor->current_npcs->data[choice - 1]);
 		break;
 
 	case 3:
@@ -349,7 +341,7 @@ static void handleResidentialFloor(t_city *c, t_player* p)
 static void handleOfficeFloor(t_city *c, t_player* p)
 {
 	unsigned choice;
-	const unsigned	npcCount = getNpcs(p->currentFloor->current_npcs);
+	const unsigned	npcCount = p->currentFloor->current_npcs->size;
 
 	printTime(p->currentBuilding->parentCity);
 	printSeparator();
@@ -393,7 +385,7 @@ static void handleOfficeFloor(t_city *c, t_player* p)
 		choice = safeInput_u(0, npcCount);
 		if (choice == 0)
 			break ;
-		handleDialogue(p, p->currentFloor->current_npcs[choice - 1]);
+		handleDialogue(p, p->currentFloor->current_npcs->data[choice - 1]);
 		break;
 
 	case 3:
@@ -423,7 +415,7 @@ static void handleOfficeFloor(t_city *c, t_player* p)
 static void handleOutsideInteraction(t_city* c, t_player* p)
 {
 	unsigned		choice;
-	const unsigned	npcCount = getNpcs(p->currentBuilding->current_npcs);
+	const unsigned	npcCount = p->currentBuilding->current_npcs->size;
 
 	printTime(c);
 	printSeparator();
@@ -464,7 +456,7 @@ static void handleOutsideInteraction(t_city* c, t_player* p)
 		choice = safeInput_u(0, npcCount);
 		if (choice == 0)
 			break ;
-		handleDialogue(p, p->currentBuilding->current_npcs[choice - 1]);
+		handleDialogue(p, p->currentBuilding->current_npcs->data[choice - 1]);
 		break;
 
 	case 4:

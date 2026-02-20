@@ -50,23 +50,25 @@ void generate_npc(t_npc* new_npc, t_city* c) {
 	c->npcListCount += 1;
 }
 
-void generate_family(unsigned count, t_npc** family, t_city* c) {
+void generate_family(unsigned count, t_vec *family, t_city *c) {
+	t_npc	*n = NULL;
 	if (!family) {
 		printf("Error allocating memory for family.\n");
 		exit(1);
 	}
 	for (unsigned i = 0; i < count; i++){
-		family[i] = (t_npc*)calloc(1, sizeof(t_npc));
-		if (!family[i]) {
+		n = calloc(1, sizeof(t_npc));
+		if (!n) {
 			printf("Error allocating memory for NPC.\n");
 			exit(1);
 		}
-		generate_npc(family[i], c);
-		strcpy(family[i]->lastName, family[0]->lastName);
+		vec_append(family, n);
+		generate_npc(n, c);
+		strcpy(n->lastName, ((t_npc *)family->data[0])->lastName);
 	}
 
 	for (unsigned i = 0; i < count; i++){
-		t_npc* n = family[i];
+		n = family->data[i];
 		for (unsigned j = 0; j < count; j++){
 			if (i == j){
 				continue;
@@ -74,7 +76,7 @@ void generate_family(unsigned count, t_npc** family, t_city* c) {
 			t_relationship* r = &n->relationships[n->relationshipCount];
 			r->count = n->relationshipCount + 1;
 			r->strength = 50;
-			r->target = family[j];
+			r->target = family->data[j];
 			r->type = FAMILY;
 			n->relationshipCount += 1;
 		}
@@ -90,15 +92,15 @@ void gotoWork(t_npc* n){
 
 	if (n->currentRoom)
 	{
-		add_npc(n, n->currentRoom->parentFloor->current_npcs);
-		remove_npc(n, n->currentRoom->current_npcs);
+		vec_append(n->currentRoom->parentFloor->current_npcs, n);
+		vec_ord_rm(n->currentRoom->current_npcs, n);
 		n->currentRoom = NULL;
 		return ;
 	}
 	if (n->currentFloor && (n->currentBuilding != n->placeOfWork->parentFloor->parentBuilding))
 	{
-		add_npc(n, n->currentFloor->parentBuilding->current_npcs);
-		remove_npc(n, n->currentFloor->current_npcs);
+		vec_append(n->currentFloor->parentBuilding->current_npcs, n);
+		vec_ord_rm(n->currentFloor->current_npcs, n);
 		n->currentFloor = NULL;
 		return ;
 	}
@@ -115,23 +117,23 @@ void gotoWork(t_npc* n){
 			n->y++;
 		else if (n->y > work_y)
 			n->y--;
-		remove_npc(n, n->currentBuilding->current_npcs);
+		vec_ord_rm(n->currentBuilding->current_npcs, n);
 		n->currentBuilding = n->currentBuilding->parentCity->cityMap[n->x][n->y];
-		add_npc(n, n->currentBuilding->current_npcs);
+		vec_append(n->currentBuilding->current_npcs, n);
 		return ;
 	}
 	if ((n->currentBuilding->x == work_x && n->currentBuilding->y == work_y) && !n->currentFloor)
 	{
 		n->currentFloor = n->placeOfWork->parentFloor;
-		add_npc(n, n->currentFloor->current_npcs);
-		remove_npc(n, n->currentBuilding->current_npcs);
+		vec_append(n->currentFloor->current_npcs, n);
+		vec_ord_rm(n->currentBuilding->current_npcs, n);
 		return ;
 	}
 	if (n->currentFloor == n->placeOfWork->parentFloor)
 	{
 		n->currentOffice = n->placeOfWork;
-		add_npc(n, n->currentOffice->current_npcs);
-		remove_npc(n, n->currentFloor->current_npcs);
+		vec_append(n->currentOffice->current_npcs, n);
+		vec_ord_rm(n->currentFloor->current_npcs, n);
 		return ;
 	}
 }
@@ -139,20 +141,20 @@ void gotoWork(t_npc* n){
 void gotoHome(t_npc *n)
 {
 	if(!n->placeOfResidence || (n->placeOfResidence == n->currentRoom)){
-		return;
+		return ;
 	}
 
 	if (n->currentOffice)
 	{
-		add_npc(n, n->currentOffice->parentFloor->current_npcs);
-		remove_npc(n, n->currentOffice->current_npcs);
+		vec_append(n->currentOffice->parentFloor->current_npcs, n);
+		vec_ord_rm(n->currentOffice->current_npcs, n);
 		n->currentOffice = NULL;
 		return ;
 	}
 	if (n->currentFloor && (n->currentBuilding != n->placeOfResidence->parentFloor->parentBuilding))
 	{
-		add_npc(n, n->currentBuilding->current_npcs);
-		remove_npc(n, n->currentFloor->current_npcs);
+		vec_append(n->currentBuilding->current_npcs, n);
+		vec_ord_rm(n->currentFloor->current_npcs, n);
 		n->currentFloor = NULL;
 		return ;
 	}
@@ -169,23 +171,23 @@ void gotoHome(t_npc *n)
 			n->y++;
 		else if (n->y > home_y)
 			n->y--;
-		remove_npc(n, n->currentBuilding->current_npcs);
+		vec_ord_rm(n->currentBuilding->current_npcs, n);
 		n->currentBuilding = n->currentBuilding->parentCity->cityMap[n->x][n->y];
-		add_npc(n, n->currentBuilding->current_npcs);
+		vec_append(n->currentBuilding->current_npcs, n);
 		return ;
 	}
 	if ((n->currentBuilding->x == home_x && n->currentBuilding->y == home_y) && !n->currentFloor)
 	{
 		n->currentFloor = n->placeOfResidence->parentFloor;
-		add_npc(n, n->currentFloor->current_npcs);
-		remove_npc(n, n->currentBuilding->current_npcs);
+		vec_append(n->currentFloor->current_npcs, n);
+		vec_ord_rm(n->currentBuilding->current_npcs, n);
 		return ;
 	}
 	if (n->currentFloor == n->placeOfResidence->parentFloor)
 	{
 		n->currentRoom = n->placeOfResidence;
-		add_npc(n, n->currentRoom->current_npcs);
-		remove_npc(n, n->currentFloor->current_npcs);
+		vec_append(n->currentRoom->current_npcs, n);
+		vec_ord_rm(n->currentFloor->current_npcs, n);
 		return ;
 	}
 }
@@ -202,37 +204,5 @@ void npc_tick(t_npc* n, t_city* c)
 	else
 	{
 		gotoHome(n);
-	}
-}
-
-void add_npc(t_npc *n, t_npc **npc_list)
-{
-	for (int i = 0; i < MAX_NPC_PRESENT; i++)
-	{
-		if (npc_list[i] == NULL)
-		{
-			npc_list[i] = n;
-			return;
-		}
-	}
-}
-
-void remove_npc(t_npc *n, t_npc **npc_list)
-{
-	for (int i = 0; i < MAX_NPC_PRESENT; i++)
-	{
-		if (npc_list[i] == n)
-		{
-			npc_list[i] = NULL;
-			break ;
-		}
-	}
-	for (int i = 0; i < MAX_NPC_PRESENT - 1; i++)
-	{
-		if (npc_list[i] == NULL && npc_list[i + 1] != NULL)
-		{
-			npc_list[i] = npc_list[i + 1];
-			npc_list[i + 1] = NULL;
-		}
 	}
 }
