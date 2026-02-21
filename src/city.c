@@ -73,7 +73,6 @@ static void f_residential_gen(t_floor *parent_f)
 			printf("Error allocating memory for current NPCs.\n");
 			exit(1);
 		}
-		r->npc_count = 0;
 		r->parentFloor = parent_f;
 		r->room_number = i;
 		r_f->rooms[i] = r;
@@ -125,22 +124,22 @@ void allocateFloors(t_building* b) {
 }
 
 t_room* getFreeResidence(t_city* c){
-	unsigned countC = (unsigned)zurand() % c->residentialBuildings;
+	unsigned countC = (unsigned)zurand() % c->residentialBuildings->size;
 	unsigned countB = countC;
-	unsigned floorC = (unsigned)zurand() % c->residentialBuildingsList[countC]->height;
+	unsigned floorC = (unsigned)zurand() % ((t_building *)c->residentialBuildings->data[countC])->height;
 	unsigned floorB = floorC;
 	unsigned roomC = (unsigned)zurand() % 4;
 	unsigned roomB = roomC;
-	while (vec_get(c->residentialBuildingsList[countC]->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC]->assigned_npcs->data, 0)){
+	while (vec_get(((t_building *)c->residentialBuildings->data[countC])->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC]->assigned_npcs, 0)){
 		if (roomC < 3){
 			roomC++;
 		} else {
 			roomC = 0;
-			if (floorC < c->residentialBuildingsList[countC]->height - 1){
+			if (floorC < ((t_building *)c->residentialBuildings->data[countC])->height - 1){
 				floorC++;
 			} else {
 				floorC = 0;
-				if (countC < c->residentialBuildings - 1){
+				if (countC < c->residentialBuildings->size - 1){
 					countC++;
 				} else {
 					countC = 0;
@@ -151,26 +150,26 @@ t_room* getFreeResidence(t_city* c){
 			return NULL;
 		}
 	}
-	return c->residentialBuildingsList[countC]->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC];
+	return ((t_building *)c->residentialBuildings->data[countC])->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC];
 }
 
 t_office* getFreeWorkplace(t_city* c){
-	unsigned countC = (unsigned)zurand() % c->officeBuildings;
+	unsigned countC = (unsigned)zurand() % c->officeBuildings->size;
 	unsigned countB = countC;
-	unsigned floorC = (unsigned)zurand() % c->officeBuildingsList[countC]->height;
+	unsigned floorC = (unsigned)zurand() % ((t_building *)c->officeBuildings->data[countC])->height;
 	unsigned floorB = floorC;
-	unsigned officeC = (unsigned)zurand() % c->officeBuildingsList[countC]->floors[floorC]->floorTypeData.officeFloorData->office_count;
+	unsigned officeC = (unsigned)zurand() % ((t_building *)c->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->office_count;
 	unsigned officeB = officeC;
-	while (c->officeBuildingsList[countC]->floors[floorC]->floorTypeData.officeFloorData->offices[officeC]->employee_count == 5){
-		if (officeC < c->officeBuildingsList[countC]->floors[floorC]->floorTypeData.officeFloorData->office_count - 1){
+	while (((t_building *)c->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->offices[officeC]->employee_count == 5){
+		if (officeC < ((t_building *)c->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->office_count - 1){
 			officeC++;
 		} else {
 			officeC = 0;
-			if (floorC < c->officeBuildingsList[countC]->height - 1){
+			if (floorC < ((t_building *)c->officeBuildings->data[countC])->height - 1){
 				floorC++;
 			} else {
 				floorC = 0;
-				if (countC < c->officeBuildings - 1){
+				if (countC < (c->officeBuildings->size - 1)){
 					countC++;
 				} else {
 					countC = 0;
@@ -181,14 +180,14 @@ t_office* getFreeWorkplace(t_city* c){
 			return NULL;
 		}
 	}
-	return c->officeBuildingsList[countC]->floors[floorC]->floorTypeData.officeFloorData->offices[officeC];
+	return ((t_building *)c->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->offices[officeC];
 }
 
 void populateCity(t_city* c){
-	for (unsigned i = 0; i < c->residentialBuildings; i++){
-		for (unsigned j = 0; j < c->residentialBuildingsList[i]->height; j++){
-			for (unsigned k = 0; k < c->residentialBuildingsList[i]->floors[j]->floorTypeData.residentialFloorData->room_count; k++){
-				t_room* r = c->residentialBuildingsList[i]->floors[j]->floorTypeData.residentialFloorData->rooms[k];
+	for (unsigned i = 0; i < c->residentialBuildings->size; i++){
+		for (unsigned j = 0; j < ((t_building *)c->residentialBuildings->data[i])->height; j++){
+			for (unsigned k = 0; k < ((t_building *)c->residentialBuildings->data[i])->floors[j]->floorTypeData.residentialFloorData->room_count; k++){
+				t_room* r = ((t_building *)c->residentialBuildings->data[i])->floors[j]->floorTypeData.residentialFloorData->rooms[k];
 				if(rand()%4){
 					t_npc* new_npc = (t_npc*)calloc(1, sizeof(t_npc));
 					if (!new_npc) {
@@ -198,7 +197,6 @@ void populateCity(t_city* c){
 					generate_npc(new_npc, c);
 					new_npc->placeOfResidence = getFreeResidence(c);
 					vec_append(new_npc->placeOfResidence->assigned_npcs, new_npc);
-					new_npc->placeOfResidence->npc_count = 1;
 					new_npc->x = new_npc->placeOfResidence->parentFloor->parentBuilding->x;
 					new_npc->y = new_npc->placeOfResidence->parentFloor->parentBuilding->y;
 					new_npc->placeOfWork = getFreeWorkplace(c);
@@ -219,8 +217,6 @@ void populateCity(t_city* c){
 					unsigned count = (unsigned)zurand() % 3 + 2;
 					generate_family(count, family, c);
 					((t_npc *)family->data[0])->placeOfResidence = getFreeResidence(c);
-					((t_npc *)family->data[0])->placeOfResidence->assigned_npcs = family;
-					((t_npc *)family->data[0])->placeOfResidence->npc_count = count;
 					for (unsigned l = 0; l < count; l++)
 					{
 						vec_append(r->current_npcs, family->data[l]);
@@ -250,9 +246,9 @@ void timeManager(t_city* c)
 {
 	t_npc *n = NULL;
 
-	for (unsigned i = 0; i < c->npcListCount; i++)
+	for (unsigned i = 0; i < c->npcList->size; i++)
 	{
-		n = c->npcList[i];
+		n = c->npcList->data[i];
 		n->tick(n, c);
 	}
 }

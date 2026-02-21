@@ -46,8 +46,7 @@ void generate_npc(t_npc* new_npc, t_city* c) {
 
 	new_npc->sanity = rand_sanity();
 
-	c->npcList[c->npcListCount] = new_npc;
-	c->npcListCount += 1;
+	vec_append(c->npcList, new_npc);
 }
 
 void generate_family(unsigned count, t_vec *family, t_city *c) {

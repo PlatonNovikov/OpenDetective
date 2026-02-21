@@ -107,26 +107,15 @@ void start(t_city* c, t_player* p) {
 			}
 		}
 	}
-	c->residentialBuildingsList = calloc(c->residentialBuildings, sizeof(t_building*));
-	if (!c->residentialBuildingsList) {
-		printf("Error allocating memory for residential buildings.\n");
-		exit(1);
-	}
-	c->officeBuildingsList = calloc(c->officeBuildings, sizeof(t_building*));
-	if (!c->officeBuildingsList) {
-		printf("Error allocating memory for office buildings.\n");
-		exit(1);
-	}
-	unsigned countR = 0;
-	unsigned countO = 0;
+	c->residentialBuildings = init_vec();
+	c->officeBuildings = init_vec();
+
 	for (unsigned i = 0; i < c->height; i++) {
 		for (unsigned j = 0; j < c->width; j++) {
 			if (c->cityMap[i][j]->building_type == RESIDENTIAL) {
-				c->residentialBuildingsList[countR] = c->cityMap[i][j];
-				countR++;
+				vec_append(c->residentialBuildings, c->cityMap[i][j]);
 			} else {
-				c->officeBuildingsList[countO] = c->cityMap[i][j];
-				countO++;
+				vec_append(c->officeBuildings, c->cityMap[i][j]);
 			}
 		}
 	}
@@ -143,8 +132,7 @@ void start(t_city* c, t_player* p) {
 			}
 		}
 	}
-	c->npcList = (t_npc**)calloc(MAX_NPC, sizeof(t_npc*));
-	c->npcListCount = 0;
+	c->npcList = init_vec();
 	populateCity(c);
     c->time = 0;
 	c->addTime(c, 36 * 60); //start at 12:00 next day

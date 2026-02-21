@@ -14,14 +14,10 @@ typedef struct t_city {
 	unsigned	width, height;
 
 	t_building	***cityMap;
-	t_building	**residentialBuildingsList;
-	t_building	**officeBuildingsList;
+	t_vec		*residentialBuildings;
+	t_vec		*officeBuildings;
 
-	unsigned	residentialBuildings;
-	unsigned	officeBuildings;
-
-	t_npc		**npcList;
-	unsigned	npcListCount;
+	t_vec		*npcList;
 
 	size_t		time;  // minutes since start
 	void		(*addTime)(t_city* self, unsigned hours);

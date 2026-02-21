@@ -54,7 +54,6 @@ typedef struct t_player t_player;
 typedef struct t_room {
 	t_vec		*assigned_npcs; // (t_npc *) Array of NPC pointers
 	t_vec		*current_npcs;  // (t_npc *) Currently present NPCs
-	unsigned 	npc_count;
 	unsigned 	room_number;
 	t_floor		*parentFloor;
 } t_room;
