@@ -6,6 +6,8 @@
 #include <string.h>
 #include <math.h>
 
+#include "../external/uthash/uthash.h"
+
 #include "structures.h"
 #include "city.h"
 
@@ -22,11 +24,18 @@ typedef enum e_relationship_type {
 } e_relationship_type;
 
 typedef struct t_relationship {
+	t_npc				*from;
 	t_npc				*target;	// Pointer to the related NPC
 	e_relationship_type	type;		// Type of relationship
 	unsigned			strength;	// 0-100 (e.g., closeness, trust)
-	unsigned			count;		// Number of interactions
+
+	UT_hash_handle		hh;
 } t_relationship;
+
+typedef struct {
+	uintptr_t a;
+	uintptr_t b;
+} t_ptrs_key;
 
 typedef struct t_schedule {
 	unsigned	work_start;
@@ -94,8 +103,6 @@ typedef struct t_npc {
 	t_office		*currentOffice;
 	int				isAlive;
 
-	t_relationship	*relationships; // Dynamic array of relationships
-	unsigned		relationshipCount;
 	unsigned		sanity;         // 0-100
 
 	t_schedule		*dailySchedule;

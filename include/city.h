@@ -13,19 +13,18 @@ typedef struct t_city {
 	char		name[100];
 	unsigned	width, height;
 
-	t_building	***cityMap;
-	t_vec		*residentialBuildings;
-	t_vec		*officeBuildings;
+	t_building		***cityMap;
+	t_vec			*residentialBuildings; // (t_building *) list of pointers to all residential buildings
+	t_vec			*officeBuildings;	// (t_building *) list of pointers to all office buildings
 
-	t_vec		*npcList;
+	t_vec			*npcList;
+	t_relationship	*rel;
 
-	size_t		time;  // minutes since start
-	void		(*addTime)(t_city* self, unsigned hours);
+	size_t			time;  // minutes since start
+	void			(*addTime)(t_city* self, unsigned hours);
 } t_city;
 
 void allocateFloors(t_building *b);
-
-void NewFunction(int i, t_building *b);
 
 t_room* getFreeResidence(t_city* c);
 

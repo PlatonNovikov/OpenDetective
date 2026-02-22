@@ -14,6 +14,7 @@ uint64_t zurand(void)
 	return ret;
 }
 
+//generates a random unsigned integer
 uint32_t urand(void)
 {
 	const int rand_size = __builtin_popcount(RAND_MAX);

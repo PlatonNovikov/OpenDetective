@@ -4,6 +4,7 @@
 //boykisser
 //writing it a year later. I have no idea why i wrote "boykisser", but im leaving it here lol
 
+// allocates and generates offices at given floor
 static void f_office_gen(t_floor *parent_f)
 {
 	parent_f->floorTypeData.officeFloorData = calloc(1, sizeof(t_officeFloor));
@@ -40,6 +41,7 @@ static void f_office_gen(t_floor *parent_f)
 	}
 }
 
+// allocates and generates residential floor at given floor
 static void f_residential_gen(t_floor *parent_f)
 {
 	parent_f->floorTypeData.residentialFloorData = calloc(1, sizeof(t_residentialFloor));
@@ -79,6 +81,7 @@ static void f_residential_gen(t_floor *parent_f)
 	}
 }
 
+// allocates and generates floor at given stage of a parent building
 static void floor_gen(t_building *parent_b, unsigned f_number)
 {
 	t_floor* f = (t_floor*)calloc(1, sizeof(t_floor));
@@ -109,6 +112,7 @@ static void floor_gen(t_building *parent_b, unsigned f_number)
 	parent_b->floors[f_number] = f;
 }
 
+// allocates and generates array of floors at given building
 void allocateFloors(t_building* b) {
 	//printf("Allocating memory for floors...\n");
 	b->floors = (t_floor**)calloc(b->height, sizeof(t_floor*));
@@ -123,6 +127,7 @@ void allocateFloors(t_building* b) {
 	//printf("Done!\n");
 }
 
+// returns a pointer to a free room
 t_room* getFreeResidence(t_city* c){
 	unsigned countC = (unsigned)zurand() % c->residentialBuildings->size;
 	unsigned countB = countC;
@@ -153,6 +158,7 @@ t_room* getFreeResidence(t_city* c){
 	return ((t_building *)c->residentialBuildings->data[countC])->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC];
 }
 
+// returns a pointer to a free office
 t_office* getFreeWorkplace(t_city* c){
 	unsigned countC = (unsigned)zurand() % c->officeBuildings->size;
 	unsigned countB = countC;

@@ -3,6 +3,7 @@
 
 #include "../../include/vector.h"
 
+// initialises a vector
 t_vec	*init_vec(void)
 {
 	t_vec *vec = (t_vec *)calloc(1, sizeof(t_vec));
@@ -11,6 +12,7 @@ t_vec	*init_vec(void)
 	return vec;
 }
 
+// appends a pointer to a vector
 void	vec_append(t_vec *vec, void *ptr)
 {
 	if (!vec->data)
@@ -34,6 +36,7 @@ void	vec_append(t_vec *vec, void *ptr)
 	vec->size++;
 }
 
+// removes a pointer from a vector
 bool	vec_ord_rm(t_vec *vec, void *ptr)
 {
 	size_t i = 0;
@@ -50,6 +53,8 @@ bool	vec_ord_rm(t_vec *vec, void *ptr)
 	return true;
 }
 
+// returns a pointer at given index in vector
+// returns null if such index does not exist
 void	*vec_get(t_vec *vec, size_t index)
 {
 	if (!vec || vec->size <= index)

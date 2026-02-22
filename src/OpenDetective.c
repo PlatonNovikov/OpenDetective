@@ -49,6 +49,8 @@ void start(t_city* c, t_player* p) {
 	printf("Generating...\n");
 
 	c->addTime = addTime;
+	c->rel = NULL;
+	
 	c->cityMap = calloc(c->height, sizeof(t_building**));
 	if (!c->cityMap) {
 		printf("Error allocating memory for city map.\n");
