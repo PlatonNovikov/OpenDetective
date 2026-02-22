@@ -11,60 +11,66 @@
 #include "../include/city.h"
 #include "../include/rand.h"
 
-void player_building_spawn(t_city* c, t_player* p){
-	for (unsigned x = p->x; x < c->height; ++x) {
-		for (unsigned y = (x == p->x ? p->y : 0); y < c->width; ++y) {
-			if (c->cityMap[x][y]->building_type == RESIDENTIAL) {
+t_city *g_city;
+
+void player_building_spawn(t_player* p){
+	for (unsigned x = p->x; x < g_city->height; ++x) {
+		for (unsigned y = (x == p->x ? p->y : 0); y < g_city->width; ++y) {
+			if (g_city->cityMap[x][y]->building_type == RESIDENTIAL) {
 				p->x = x;
 				p->y = y;
-				p->currentBuilding = c->cityMap[x][y];
+				p->currentBuilding = g_city->cityMap[x][y];
 				return; // Остановка поиска
 			}
 		}
 	}
 
 	// Если не нашли здание, начинаем заново с (0, 0)
-	for (unsigned x = 0; x < c->height; ++x) {
-		for (unsigned y = 0; y < c->width; ++y) {
-			if (c->cityMap[x][y]->building_type == RESIDENTIAL) {
+	for (unsigned x = 0; x < g_city->height; ++x) {
+		for (unsigned y = 0; y < g_city->width; ++y) {
+			if (g_city->cityMap[x][y]->building_type == RESIDENTIAL) {
 				p->x = x;
 				p->y = y;
-				p->currentBuilding = c->cityMap[x][y];
+				p->currentBuilding = g_city->cityMap[x][y];
 				return;
 			}
 		}
 	}
 }
 
-void start(t_city* c, t_player* p) {
+void start(t_player* p) {
+	g_city = calloc(1, sizeof(t_city));
+	if (!g_city)
+		exit(EXIT_FAILURE);
+	
 	printf("Enter city name: ");
-	scanf("%99s", c->name);
+	scanf("%99s", g_city->name);
 	clear();
 	printf("Enter city width: ");
-	scanf("%u", &c->width);
+	scanf("%u", &g_city->width);
 	clear();
 	printf("Enter city height: ");
-	scanf("%u", &c->height);
+	scanf("%u", &g_city->height);
 	clear();
 	printf("Generating...\n");
 
-	c->addTime = addTime;
-	c->rel = NULL;
-	
-	c->cityMap = calloc(c->height, sizeof(t_building**));
-	if (!c->cityMap) {
+	g_city->addTime = addTime;
+	g_city->rel = NULL;
+
+	g_city->cityMap = calloc(g_city->height, sizeof(t_building**));
+	if (!g_city->cityMap) {
 		printf("Error allocating memory for city map.\n");
 		exit(1);
 	}
 
-	for (unsigned i = 0; i < c->height; i++) {
-		c->cityMap[i] = calloc(c->width, sizeof(t_building*));
-		if (!c->cityMap[i]) {
+	for (unsigned i = 0; i < g_city->height; i++) {
+		g_city->cityMap[i] = calloc(g_city->width, sizeof(t_building*));
+		if (!g_city->cityMap[i]) {
 			printf("Error allocating memory for city map row.\n");
 			exit(1);
 		}
 
-		for (unsigned j = 0; j < c->width; j++) {
+		for (unsigned j = 0; j < g_city->width; j++) {
 			t_building* b = calloc(1, sizeof(t_building));
 			if (!b) {
 				printf("Error allocating memory for building.\n");
@@ -75,7 +81,7 @@ void start(t_city* c, t_player* p) {
 			b->x = i;
 			b->y = j;
 			b->height = (unsigned)rand() % 7 + 3; // Высота от 3 до 10 этажей
-			b->parentCity = c;
+			b->parentCity = g_city;
 			b->current_npcs = calloc(MAX_NPC_PRESENT, sizeof(t_npc*));
 			if (!b->current_npcs)
 			{
@@ -95,35 +101,35 @@ void start(t_city* c, t_player* p) {
 			}
 
 			allocateFloors(b);
-			c->cityMap[i][j] = b;
+			g_city->cityMap[i][j] = b;
 		}
 	}
-	c->residentialBuildings = 0;
-	c->officeBuildings = 0;
-	for (unsigned i = 0; i < c->height; i++) {
-		for (unsigned j = 0; j < c->width; j++) {
-			if (c->cityMap[i][j]->building_type == RESIDENTIAL) {
-				c->residentialBuildings++;
+	g_city->residentialBuildings = 0;
+	g_city->officeBuildings = 0;
+	for (unsigned i = 0; i < g_city->height; i++) {
+		for (unsigned j = 0; j < g_city->width; j++) {
+			if (g_city->cityMap[i][j]->building_type == RESIDENTIAL) {
+				g_city->residentialBuildings++;
 			} else {
-				c->officeBuildings++;
+				g_city->officeBuildings++;
 			}
 		}
 	}
-	c->residentialBuildings = init_vec();
-	c->officeBuildings = init_vec();
+	g_city->residentialBuildings = init_vec();
+	g_city->officeBuildings = init_vec();
 
-	for (unsigned i = 0; i < c->height; i++) {
-		for (unsigned j = 0; j < c->width; j++) {
-			if (c->cityMap[i][j]->building_type == RESIDENTIAL) {
-				vec_append(c->residentialBuildings, c->cityMap[i][j]);
+	for (unsigned i = 0; i < g_city->height; i++) {
+		for (unsigned j = 0; j < g_city->width; j++) {
+			if (g_city->cityMap[i][j]->building_type == RESIDENTIAL) {
+				vec_append(g_city->residentialBuildings, g_city->cityMap[i][j]);
 			} else {
-				vec_append(c->officeBuildings, c->cityMap[i][j]);
+				vec_append(g_city->officeBuildings, g_city->cityMap[i][j]);
 			}
 		}
 	}
-	for (unsigned i = 0; i < c->height; i++) {
-		for (unsigned j = 0; j < c->width; j++) {
-			t_building* b = c->cityMap[i][j];
+	for (unsigned i = 0; i < g_city->height; i++) {
+		for (unsigned j = 0; j < g_city->width; j++) {
+			t_building* b = g_city->cityMap[i][j];
 			for (unsigned k = 0; k < b->height; k++) {
 				if (b->floors[k]->floorType == OFFICE) {
 					for (unsigned l = 0; l < b->floors[k]->floorTypeData.officeFloorData->office_count; l++){
@@ -134,14 +140,14 @@ void start(t_city* c, t_player* p) {
 			}
 		}
 	}
-	c->npcList = init_vec();
-	populateCity(c);
-    c->time = 0;
-	c->addTime(c, 36 * 60); //start at 12:00 next day
-	p->x = urand() % c->height;
-	p->y = urand() % c->width;
-	player_building_spawn(c, p);
-	// p->currentBuilding = c->cityMap[p->x][p->y];
+	g_city->npcList = init_vec();
+	populateCity(g_city);
+    g_city->time = 0;
+	g_city->addTime(36 * 60); //start at 12:00 next day
+	p->x = urand() % g_city->height;
+	p->y = urand() % g_city->width;
+	player_building_spawn(p);
+	// p->currentBuilding = g_city->cityMap[p->x][p->y];
 	p->currentFloor = p->currentBuilding->floors[urand() % p->currentBuilding->height];
 	p->currentRoom = p->currentFloor->floorTypeData.residentialFloorData->rooms[rand() % 4];
 	p->currentOffice = NULL;
@@ -149,12 +155,12 @@ void start(t_city* c, t_player* p) {
 	//printf("City generated successfully!\n\n");
 }
 
-void freeCity(t_city* c) {
-	// if (!c) return;
+void freeCity() {
+	// if (!g_city) return;
 
-	// for (unsigned i = 0; i < c->height; i++) {
-	// 	for (unsigned j = 0; j < c->width; j++) {
-	// 		t_building* b = c->cityMap[i][j];
+	// for (unsigned i = 0; i < g_city->height; i++) {
+	// 	for (unsigned j = 0; j < g_city->width; j++) {
+	// 		t_building* b = g_city->cityMap[i][j];
 	// 		if (!b) continue;
 
 	// 		// Освобождаем этажи
@@ -218,18 +224,18 @@ void freeCity(t_city* c) {
 	// 		free(b);         // Освобождаем само здание
 	// 	}
 
-	// 	free(c->cityMap[i]); // Освобождаем строку карты
+	// 	free(g_city->cityMap[i]); // Освобождаем строку карты
 	// }
 
 	// // Освобождаем списки зданий
-	// if (c->residentialBuildingsList) {
-	// 	free(c->residentialBuildingsList);
+	// if (g_city->residentialBuildingsList) {
+	// 	free(g_city->residentialBuildingsList);
 	// }
-	// if (c->officeBuildingsList) {
-	// 	free(c->officeBuildingsList);
+	// if (g_city->officeBuildingsList) {
+	// 	free(g_city->officeBuildingsList);
 	// }
 
-	// free(c->cityMap); // Освобождаем карту города
+	// free(g_city->cityMap); // Освобождаем карту города
 }
 
 void openCMD(){
@@ -237,7 +243,7 @@ void openCMD(){
 		system("start cmd.exe /K OpenDetective.exe --child");
 	#elif defined(__linux__) || defined(__unix__)
 		if (system("which gnome-terminal > /dev/null 2>&1") == 0) {
-			system("gnome-terminal -- bash -c './OpenDetective --child; exec bash'");
+			system("gnome-terminal -- bash -g_city './OpenDetective --child; exec bash'");
 		} else if (system("which xterm > /dev/null 2>&1") == 0) {
 			system("xterm -hold -e './OpenDetective --child' &");
 		} else if (system("which konsole > /dev/null 2>&1") == 0) {
@@ -262,7 +268,6 @@ int main(int argc, char *argv[])
 	srand((unsigned)time(NULL));
 	// srand(THE_ANSWER_TO_LIFE_THE_UNIVERSE_AND_EVERYTHING); //debug
 
-	t_city c;
 	t_player p;
 
 	clear();
@@ -275,16 +280,16 @@ int main(int argc, char *argv[])
 	if (choice == 2)
 	{
 		printf("Not implemented yet");
-		// loadSavefile(&c, &p);
+		// loadSavefile(&p);
 	}
 	else
 	{
-		start(&c, &p);
+		start(&p);
 	}
 
 	while (1) {
-		playerControl(&c, &p);
+		playerControl(&p);
 	}
-	freeCity(&c);
+	freeCity();
 	return 0;
 }

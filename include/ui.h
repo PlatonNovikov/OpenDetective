@@ -9,6 +9,6 @@
 #include "saveload.h"
 #include "city.h"
 
-void playerControl(t_city* c, t_player* p);
+void playerControl(t_player* p);
 
 #endif

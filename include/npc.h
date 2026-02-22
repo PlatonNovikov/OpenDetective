@@ -17,10 +17,16 @@
 #define BLOOD_TYPE_COUNT 8
 #define FINGERPRINT_TYPE_COUNT 20
 
+typedef struct {
+	uintptr_t a;
+	uintptr_t b;
+} t_ptrs_key;
+
 typedef enum e_relationship_type {
 	FAMILY,
 	FRIEND,
 	COWORKER,
+	NEUTRAL
 } e_relationship_type;
 
 typedef struct t_relationship {
@@ -30,12 +36,10 @@ typedef struct t_relationship {
 	unsigned			strength;	// 0-100 (e.g., closeness, trust)
 
 	UT_hash_handle		hh;
+	t_ptrs_key			key;
 } t_relationship;
 
-typedef struct {
-	uintptr_t a;
-	uintptr_t b;
-} t_ptrs_key;
+t_relationship	*get_rel(t_npc *from, t_npc *to);
 
 typedef struct t_schedule {
 	unsigned	work_start;
@@ -121,15 +125,15 @@ typedef struct t_npc {
 	e_blood_type	bloodType;
 	e_fingerprint	fingerprintType;
 
-	void			(*tick)(struct t_npc* n, t_city* c);
+	void			(*tick)(struct t_npc* n);
 } t_npc;
 
-void generate_npc(t_npc* new_npc, t_city* c);
+void generate_npc(t_npc* new_npc);
 
-void generate_family(unsigned count, t_vec* family, t_city* c);
+void generate_family(unsigned count, t_vec* family);
 
 void gotoWork(t_npc* n);
 
-void npc_tick(t_npc* n, t_city* c);
+void npc_tick(t_npc* n);
 
 #endif

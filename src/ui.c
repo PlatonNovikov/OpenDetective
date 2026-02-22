@@ -1,23 +1,23 @@
 #include "../include/ui.h"
 
-static void printMap(t_city* c, t_player* p)
+static void printMap(t_player* p)
 {
-	printf("\n\033[36m%s City Map\033[0m\n", c->name); // Cyan city name
+	printf("\n\033[36m%s City Map\033[0m\n", g_city->name); // Cyan city name
 	printf("╔");
-	for(unsigned i = 0; i < c->width; i++) {
+	for(unsigned i = 0; i < g_city->width; i++) {
 		printf("═══");
-		if (i < c->width - 1) {
+		if (i < g_city->width - 1) {
 			printf("╦");
 		}
 	}
 	printf("╗\n");
-	for (unsigned i = 0; i < c->height; i++) {
-		for (unsigned j = 0; j < c->width; j++) {
+	for (unsigned i = 0; i < g_city->height; i++) {
+		for (unsigned j = 0; j < g_city->width; j++) {
 			printf("║ "); // Vertical separator
 			if (p->x == i && p->y == j) {
 				printf("\033[1;31m☺\033[0m"); // Bold red player
-			} else if (c->cityMap[i][j]) {
-				switch (c->cityMap[i][j]->building_type) {
+			} else if (g_city->cityMap[i][j]) {
+				switch (g_city->cityMap[i][j]->building_type) {
 					case RESIDENTIAL:
 						printf("\033[32m⌂\033[0m"); // Green house
 						break;
@@ -34,11 +34,11 @@ static void printMap(t_city* c, t_player* p)
 			printf(" ");
 		}
 		printf("║\n");
-		if (i < c->height - 1) {
+		if (i < g_city->height - 1) {
 			printf("╠");
-			for (unsigned j = 0; j < c->width; j++) {
+			for (unsigned j = 0; j < g_city->width; j++) {
 				printf("═══");
-				if (j < c->width - 1) {
+				if (j < g_city->width - 1) {
 					printf("╬");
 				}
 			}
@@ -46,9 +46,9 @@ static void printMap(t_city* c, t_player* p)
 		}
 	}
 	printf("╚");
-	for (unsigned i = 0; i < c->width; i++) {
+	for (unsigned i = 0; i < g_city->width; i++) {
 		printf("═══");
-		if (i < c->width - 1) {
+		if (i < g_city->width - 1) {
 			printf("╩");
 		}
 	}
@@ -93,16 +93,16 @@ static void listNpcs(t_vec *npcList, unsigned startIndex)
 	}
 }
 
-static void printTime(t_city* c) {
-	printf("\033[33mDay %ld, Time: %02ld:%02ld\033[0m\n", currentDay(c), currentTimeHour(c), currentTimeMinute(c));
+static void printTime() {
+	printf("\033[33mDay %ld, Time: %02ld:%02ld\033[0m\n", currentDay(), currentTimeHour(), currentTimeMinute());
 }
 
-static void handleMapMovement(t_city* c, t_player* p)
+static void handleMapMovement(t_player* p)
 {
 	unsigned choice;
 
 	printSeparator();
-	printMap(c, p);
+	printMap(p);
 
 	printf("1: Move north\n");
 	printf("2: Move south\n");
@@ -120,14 +120,14 @@ static void handleMapMovement(t_city* c, t_player* p)
 		break;
 
 	case 2:
-		if (p->x < c->height - 1)
+		if (p->x < g_city->height - 1)
 			p->x += 1;
 		else
 			printf("You can't move further south.\n");
 		break;
 
 	case 3:
-		if (p->y < c->width - 1)
+		if (p->y < g_city->width - 1)
 			p->y += 1;
 		else
 			printf("You can't move further east.\n");
@@ -140,8 +140,8 @@ static void handleMapMovement(t_city* c, t_player* p)
 			printf("You can't move further west.\n");
 		break;
 	}
-	p->currentBuilding = c->cityMap[p->x][p->y];
-	c->addTime(c, 1);
+	p->currentBuilding = g_city->cityMap[p->x][p->y];
+	g_city->addTime(1);
 }
 
 static void handleDialogue(t_player* p, t_npc* n)
@@ -168,12 +168,12 @@ static void handleDialogue(t_player* p, t_npc* n)
 	}
 }
 
-static void handleResidentialRoom(t_city *c, t_player* p)
+static void handleResidentialRoom(t_player* p)
 {
 	unsigned		choice;
 	const size_t	npcCount = p->currentRoom->current_npcs->size;
 
-	printTime(c);
+	printTime(g_city);
 	printSeparator();
 	printf("You are in room number %d\n", p->currentRoom->room_number);
 	if (npcCount > 0)
@@ -208,7 +208,7 @@ static void handleResidentialRoom(t_city *c, t_player* p)
 	case 0:
 		printf("You exit the room.\n");
 		p->currentRoom = NULL;
-		addTime(c, 1);
+		addTime(1);
 		break;
 
 	default:
@@ -216,12 +216,12 @@ static void handleResidentialRoom(t_city *c, t_player* p)
 	}
 }
 
-static void handleOffice(t_city* c, t_player* p)
+static void handleOffice(t_player* p)
 {
 	unsigned		choice;
 	const unsigned	npcCount = p->currentOffice->current_npcs->size;
 
-	printTime(c);
+	printTime(g_city);
 	printSeparator();
 	printf("You are in office number %d of %s\n", p->currentOffice->office_number, p->currentOffice->name);
 	if (npcCount > 0)
@@ -256,7 +256,7 @@ static void handleOffice(t_city* c, t_player* p)
 	case 0:
 		printf("You exit the office.\n");
 		p->currentOffice = NULL;
-		addTime(c, 1);
+		addTime(1);
 		break;
 
 	default:
@@ -264,7 +264,7 @@ static void handleOffice(t_city* c, t_player* p)
 	}
 }
 
-static void handleResidentialFloor(t_city *c, t_player* p)
+static void handleResidentialFloor(t_player* p)
 {
 	unsigned		choice;
 	const unsigned	npcCount = p->currentFloor->current_npcs->size;
@@ -297,7 +297,7 @@ static void handleResidentialFloor(t_city *c, t_player* p)
 		}
 		choice = safeInput_u(1, p->currentFloor->floorTypeData.residentialFloorData->room_count);
 		p->currentRoom = p->currentFloor->floorTypeData.residentialFloorData->rooms[choice - 1];
-		addTime(c, 1);
+		addTime(1);
 		break;
 
 	case 2:
@@ -324,13 +324,13 @@ static void handleResidentialFloor(t_city *c, t_player* p)
 		if (choice == 0)
 			break ;
 		p->currentFloor = p->currentBuilding->floors[choice - 1];
-		addTime(c, 1);
+		addTime(1);
 		break;
 
 	case 0:
 		printf("You exit the building.\n");
 		p->currentFloor = NULL;
-		addTime(c, 1);
+		addTime(1);
 		break;
 
 	default:
@@ -338,7 +338,7 @@ static void handleResidentialFloor(t_city *c, t_player* p)
 	}
 }
 
-static void handleOfficeFloor(t_city *c, t_player* p)
+static void handleOfficeFloor(t_player* p)
 {
 	unsigned choice;
 	const unsigned	npcCount = p->currentFloor->current_npcs->size;
@@ -371,7 +371,7 @@ static void handleOfficeFloor(t_city *c, t_player* p)
 		}
 		choice = safeInput_u(1, p->currentFloor->floorTypeData.officeFloorData->office_count);
 		p->currentOffice = p->currentFloor->floorTypeData.officeFloorData->offices[choice - 1];
-		addTime(c, 1);
+		addTime(1);
 		break;
 
 	case 2:
@@ -398,13 +398,13 @@ static void handleOfficeFloor(t_city *c, t_player* p)
 		if (choice == 0)
 			break ;
 		p->currentFloor = p->currentBuilding->floors[choice - 1];
-		addTime(c, 1);
+		addTime(1);
 		break;
 
 	case 0:
 		printf("You exit the building.\n");
 		p->currentFloor = NULL;
-		addTime(c, 1);
+		addTime(1);
 		break;
 
 	default:
@@ -412,12 +412,12 @@ static void handleOfficeFloor(t_city *c, t_player* p)
 	}
 }
 
-static void handleOutsideInteraction(t_city* c, t_player* p)
+static void handleOutsideInteraction(t_player* p)
 {
 	unsigned		choice;
 	const unsigned	npcCount = p->currentBuilding->current_npcs->size;
 
-	printTime(c);
+	printTime(g_city);
 	printSeparator();
 	printf("You are outside at (%d, %d) in front of %s\n", p->x, p->y, p->currentBuilding->name);
 	if (npcCount > 0)
@@ -442,7 +442,7 @@ static void handleOutsideInteraction(t_city* c, t_player* p)
 		break;
 
 	case 2:
-		handleMapMovement(c, p);
+		handleMapMovement(p);
 		break;
 
 	case 3:
@@ -462,11 +462,11 @@ static void handleOutsideInteraction(t_city* c, t_player* p)
 	case 4:
 		printf("How many hours do you want to sleep? (from 1 to 12): ");
 		choice = safeInput_u(1, 12);
-		c->addTime(c, choice * 60);
+		g_city->addTime(choice * 60);
 		printf("You slept for %d hours.\n", choice);
 		break;
 	case 0:
-		// saveGame(c, p);
+		// saveGame(g_city, p);
 		printf("Exiting...\n");
 		exit(0);
 		break;
@@ -477,28 +477,28 @@ static void handleOutsideInteraction(t_city* c, t_player* p)
 }
 
 // Основная функция
-void playerControl(t_city* c, t_player* p) {
+void playerControl(t_player* p) {
 	if (p->currentRoom)
 	{
-		handleResidentialRoom(c, p);
+		handleResidentialRoom(p);
 	}
 	else if (p->currentOffice)
 	{
-		handleOffice(c, p);
+		handleOffice(p);
 	}
 	else if (p->currentFloor)
 	{
 		if (p->currentBuilding->building_type == RESIDENTIAL)
 		{
-			handleResidentialFloor(c, p);
+			handleResidentialFloor(p);
 		}
 		else if (p->currentBuilding->building_type == OFFICE)
 		{
-			handleOfficeFloor(c, p);
+			handleOfficeFloor(p);
 		}
 	}
 	else
 	{
-		handleOutsideInteraction(c, p);
+		handleOutsideInteraction(p);
 	}
 }

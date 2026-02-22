@@ -128,23 +128,23 @@ void allocateFloors(t_building* b) {
 }
 
 // returns a pointer to a free room
-t_room* getFreeResidence(t_city* c){
-	unsigned countC = (unsigned)zurand() % c->residentialBuildings->size;
+t_room* getFreeResidence(){
+	unsigned countC = (unsigned)zurand() % g_city->residentialBuildings->size;
 	unsigned countB = countC;
-	unsigned floorC = (unsigned)zurand() % ((t_building *)c->residentialBuildings->data[countC])->height;
+	unsigned floorC = (unsigned)zurand() % ((t_building *)g_city->residentialBuildings->data[countC])->height;
 	unsigned floorB = floorC;
 	unsigned roomC = (unsigned)zurand() % 4;
 	unsigned roomB = roomC;
-	while (vec_get(((t_building *)c->residentialBuildings->data[countC])->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC]->assigned_npcs, 0)){
+	while (vec_get(((t_building *)g_city->residentialBuildings->data[countC])->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC]->assigned_npcs, 0)){
 		if (roomC < 3){
 			roomC++;
 		} else {
 			roomC = 0;
-			if (floorC < ((t_building *)c->residentialBuildings->data[countC])->height - 1){
+			if (floorC < ((t_building *)g_city->residentialBuildings->data[countC])->height - 1){
 				floorC++;
 			} else {
 				floorC = 0;
-				if (countC < c->residentialBuildings->size - 1){
+				if (countC < g_city->residentialBuildings->size - 1){
 					countC++;
 				} else {
 					countC = 0;
@@ -155,27 +155,27 @@ t_room* getFreeResidence(t_city* c){
 			return NULL;
 		}
 	}
-	return ((t_building *)c->residentialBuildings->data[countC])->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC];
+	return ((t_building *)g_city->residentialBuildings->data[countC])->floors[floorC]->floorTypeData.residentialFloorData->rooms[roomC];
 }
 
 // returns a pointer to a free office
-t_office* getFreeWorkplace(t_city* c){
-	unsigned countC = (unsigned)zurand() % c->officeBuildings->size;
+t_office* getFreeWorkplace(){
+	unsigned countC = (unsigned)zurand() % g_city->officeBuildings->size;
 	unsigned countB = countC;
-	unsigned floorC = (unsigned)zurand() % ((t_building *)c->officeBuildings->data[countC])->height;
+	unsigned floorC = (unsigned)zurand() % ((t_building *)g_city->officeBuildings->data[countC])->height;
 	unsigned floorB = floorC;
-	unsigned officeC = (unsigned)zurand() % ((t_building *)c->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->office_count;
+	unsigned officeC = (unsigned)zurand() % ((t_building *)g_city->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->office_count;
 	unsigned officeB = officeC;
-	while (((t_building *)c->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->offices[officeC]->employee_count == 5){
-		if (officeC < ((t_building *)c->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->office_count - 1){
+	while (((t_building *)g_city->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->offices[officeC]->employee_count == 5){
+		if (officeC < ((t_building *)g_city->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->office_count - 1){
 			officeC++;
 		} else {
 			officeC = 0;
-			if (floorC < ((t_building *)c->officeBuildings->data[countC])->height - 1){
+			if (floorC < ((t_building *)g_city->officeBuildings->data[countC])->height - 1){
 				floorC++;
 			} else {
 				floorC = 0;
-				if (countC < (c->officeBuildings->size - 1)){
+				if (countC < (g_city->officeBuildings->size - 1)){
 					countC++;
 				} else {
 					countC = 0;
@@ -186,26 +186,26 @@ t_office* getFreeWorkplace(t_city* c){
 			return NULL;
 		}
 	}
-	return ((t_building *)c->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->offices[officeC];
+	return ((t_building *)g_city->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->offices[officeC];
 }
 
-void populateCity(t_city* c){
-	for (unsigned i = 0; i < c->residentialBuildings->size; i++){
-		for (unsigned j = 0; j < ((t_building *)c->residentialBuildings->data[i])->height; j++){
-			for (unsigned k = 0; k < ((t_building *)c->residentialBuildings->data[i])->floors[j]->floorTypeData.residentialFloorData->room_count; k++){
-				t_room* r = ((t_building *)c->residentialBuildings->data[i])->floors[j]->floorTypeData.residentialFloorData->rooms[k];
+void populateCity(){
+	for (unsigned i = 0; i < g_city->residentialBuildings->size; i++){
+		for (unsigned j = 0; j < ((t_building *)g_city->residentialBuildings->data[i])->height; j++){
+			for (unsigned k = 0; k < ((t_building *)g_city->residentialBuildings->data[i])->floors[j]->floorTypeData.residentialFloorData->room_count; k++){
+				t_room* r = ((t_building *)g_city->residentialBuildings->data[i])->floors[j]->floorTypeData.residentialFloorData->rooms[k];
 				if(rand()%4){
 					t_npc* new_npc = (t_npc*)calloc(1, sizeof(t_npc));
 					if (!new_npc) {
 						printf("Error allocating memory for NPC.\n");
 						exit(1);
 					}
-					generate_npc(new_npc, c);
-					new_npc->placeOfResidence = getFreeResidence(c);
+					generate_npc(new_npc);
+					new_npc->placeOfResidence = getFreeResidence(g_city);
 					vec_append(new_npc->placeOfResidence->assigned_npcs, new_npc);
 					new_npc->x = new_npc->placeOfResidence->parentFloor->parentBuilding->x;
 					new_npc->y = new_npc->placeOfResidence->parentFloor->parentBuilding->y;
-					new_npc->placeOfWork = getFreeWorkplace(c);
+					new_npc->placeOfWork = getFreeWorkplace(g_city);
 					new_npc->currentRoom = new_npc->placeOfResidence;
 					new_npc->currentFloor = new_npc->placeOfResidence->parentFloor;
 					new_npc->currentBuilding = new_npc->placeOfResidence->parentFloor->parentBuilding;
@@ -221,15 +221,15 @@ void populateCity(t_city* c){
 				else{
 					t_vec* family = r->assigned_npcs;
 					unsigned count = (unsigned)zurand() % 3 + 2;
-					generate_family(count, family, c);
-					((t_npc *)family->data[0])->placeOfResidence = getFreeResidence(c);
+					generate_family(count, family);
+					((t_npc *)family->data[0])->placeOfResidence = getFreeResidence(g_city);
 					for (unsigned l = 0; l < count; l++)
 					{
 						vec_append(r->current_npcs, family->data[l]);
 						((t_npc *)family->data[l])->x = ((t_npc *)family->data[0])->placeOfResidence->parentFloor->parentBuilding->x;
 						((t_npc *)family->data[l])->y = ((t_npc *)family->data[0])->placeOfResidence->parentFloor->parentBuilding->y;
 						((t_npc *)family->data[l])->placeOfResidence = ((t_npc *)family->data[0])->placeOfResidence;
-						((t_npc *)family->data[l])->placeOfWork = getFreeWorkplace(c);
+						((t_npc *)family->data[l])->placeOfWork = getFreeWorkplace(g_city);
 						((t_npc *)family->data[l])->currentRoom = r;
 						((t_npc *)family->data[l])->currentFloor = ((t_npc *)family->data[l])->placeOfResidence->parentFloor;
 						((t_npc *)family->data[l])->currentBuilding = ((t_npc *)family->data[l])->placeOfResidence->parentFloor->parentBuilding;
@@ -248,42 +248,42 @@ void populateCity(t_city* c){
 	}
 }
 
-void timeManager(t_city* c)
+void timeManager(t_city* g_city)
 {
 	t_npc *n = NULL;
 
-	for (unsigned i = 0; i < c->npcList->size; i++)
+	for (unsigned i = 0; i < g_city->npcList->size; i++)
 	{
-		n = c->npcList->data[i];
-		n->tick(n, c);
+		n = g_city->npcList->data[i];
+		n->tick(n);
 	}
 }
 
-void addTime(t_city* c, unsigned minutes)
+void addTime(unsigned minutes)
 {
 	for (unsigned i = 0; i < minutes; i++){
-		c->time += 1;
-		timeManager(c);
+		g_city->time += 1;
+		timeManager(g_city);
 	}
 }
 
-size_t currentDay(t_city *c) //returns current day number
+size_t currentDay(void) //returns current day number
 {
-	return (c->time / (60 * 24));
+	return (g_city->time / (60 * 24));
 }
 
-size_t currentTimeHour(t_city *c) //returns current hour
+size_t currentTimeHour(void) //returns current hour
 {
-	return ((c->time / 60) % 24);
+	return ((g_city->time / 60) % 24);
 }
 
 
-size_t currentTimeMinute(t_city *c) //returns current minute
+size_t currentTimeMinute(void) //returns current minute
 {
-	return (c->time % 60);
+	return (g_city->time % 60);
 }
 
-size_t currentDayMinute(t_city *c) //returns current minute
+size_t currentDayMinute(void) //returns current minute
 {
-	return (c->time % (60 * 24));
+	return (g_city->time % (60 * 24));
 }

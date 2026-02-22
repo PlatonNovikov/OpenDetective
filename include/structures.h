@@ -50,6 +50,7 @@ typedef struct t_floor t_floor;
 typedef struct t_building t_building;
 typedef struct t_city t_city;
 typedef struct t_player t_player;
+typedef struct t_relationship t_relationship;
 
 typedef struct t_room {
 	t_vec		*assigned_npcs; // (t_npc *) Array of NPC pointers

@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 #include "../include/npc.h"
 
 unsigned rand_sanity()
@@ -11,7 +13,7 @@ unsigned rand_sanity()
 	return (100 - (unsigned)(x * 100.0));
 }
 
-void generate_npc(t_npc* new_npc, t_city* c) {
+void generate_npc(t_npc* new_npc) {
 	snprintf(new_npc->firstName, sizeof(new_npc->firstName), "%s", first_names[rand() % ARRAY_SIZE]);
 	snprintf(new_npc->lastName, sizeof(new_npc->lastName), "%s", last_names[rand() % ARRAY_SIZE]);\
 	new_npc->dailySchedule = calloc(1, sizeof(t_schedule));
@@ -37,10 +39,10 @@ void generate_npc(t_npc* new_npc, t_city* c) {
 
 	new_npc->sanity = rand_sanity();
 
-	vec_append(c->npcList, new_npc);
+	vec_append(g_city->npcList, new_npc);
 }
 
-void generate_family(unsigned count, t_vec *family, t_city *c) {
+void generate_family(unsigned count, t_vec *family) {
 	t_npc	*n = NULL;
 	if (!family) {
 		printf("Error allocating memory for family.\n");
@@ -53,7 +55,7 @@ void generate_family(unsigned count, t_vec *family, t_city *c) {
 			exit(1);
 		}
 		vec_append(family, n);
-		generate_npc(n, c);
+		generate_npc(n);
 		strcpy(n->lastName, ((t_npc *)family->data[0])->lastName);
 	}
 
@@ -63,12 +65,10 @@ void generate_family(unsigned count, t_vec *family, t_city *c) {
 			if (i == j){
 				continue;
 			}
-			t_relationship* r = &n->relationships[n->relationshipCount];
-			r->count = n->relationshipCount + 1;
+			t_relationship* r = get_rel(n, family->data[j]);
 			r->strength = 50;
 			r->target = family->data[j];
 			r->type = FAMILY;
-			n->relationshipCount += 1;
 		}
 	}
 }
@@ -182,17 +182,50 @@ void gotoHome(t_npc *n)
 	}
 }
 
-void npc_tick(t_npc* n, t_city* c)
+void npc_tick(t_npc* n)
 {
 	if (!n->dailySchedule)
 		return; // No schedule defined
 
-	if (currentDayMinute(c) >= n->dailySchedule->work_start && currentDayMinute(c) < n->dailySchedule->work_end)
+	if (currentDayMinute() >= n->dailySchedule->work_start && currentDayMinute() < n->dailySchedule->work_end)
 	{
 		gotoWork(n);
 	}
 	else
 	{
 		gotoHome(n);
+	}
+}
+
+static t_relationship	*gen_rel(t_npc *from, t_npc *to)
+{
+	t_relationship	*r = NULL;
+
+	r = calloc(1, sizeof(t_relationship));
+	if (!r)
+		exit(EXIT_FAILURE);
+
+	r->from = from;
+	r->target = to;
+	r->type = NEUTRAL;
+	r->strength = 0;
+	r->key = (t_ptrs_key){(uintptr_t)from, (uintptr_t)to};
+	return (r);
+}
+
+t_relationship	*get_rel(t_npc *from, t_npc *to)
+{
+	t_ptrs_key 		k;
+	t_relationship *o;
+	o = NULL;
+	k = (t_ptrs_key){(uintptr_t)from, (uintptr_t)to};
+	HASH_FIND(hh, g_city->rel, &k, sizeof(t_ptrs_key), o);
+	if (o)
+		return (o);
+	else
+	{
+		t_relationship *r = gen_rel(from, to);
+		HASH_ADD(hh, g_city->rel, key, sizeof(t_ptrs_key), r);
+		return (r);
 	}
 }
