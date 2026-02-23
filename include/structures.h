@@ -101,14 +101,11 @@ typedef struct t_building {
 	t_vec		*current_npcs;  // (t_npc *) Currently present NPCs
 } t_building;
 
+typedef t_npc t_inner_npc;
+// type that allows player interact with npc the same way as npcs with other npcs
 typedef struct t_player {
-	unsigned 	x;
-	unsigned 	y;
-	t_building	*currentBuilding;
-	t_floor		*currentFloor;
-	t_room		*currentRoom;
-	t_office	*currentOffice;
 	char		name[100];
+	t_inner_npc	*npc;
 } t_player;
 
 #endif

@@ -13,13 +13,15 @@
 
 t_city *g_city;
 
-void player_building_spawn(t_player* p){
-	for (unsigned x = p->x; x < g_city->height; ++x) {
-		for (unsigned y = (x == p->x ? p->y : 0); y < g_city->width; ++y) {
+void player_building_spawn(t_inner_npc *n){
+	n->x = urand() % g_city->height;
+	n->y = urand() % g_city->width;
+	for (unsigned x = n->x; x < g_city->height; ++x) {
+		for (unsigned y = (x == n->x ? n->y : 0); y < g_city->width; ++y) {
 			if (g_city->cityMap[x][y]->building_type == RESIDENTIAL) {
-				p->x = x;
-				p->y = y;
-				p->currentBuilding = g_city->cityMap[x][y];
+				n->x = x;
+				n->y = y;
+				n->currentBuilding = g_city->cityMap[x][y];
 				return; // Остановка поиска
 			}
 		}
@@ -29,20 +31,33 @@ void player_building_spawn(t_player* p){
 	for (unsigned x = 0; x < g_city->height; ++x) {
 		for (unsigned y = 0; y < g_city->width; ++y) {
 			if (g_city->cityMap[x][y]->building_type == RESIDENTIAL) {
-				p->x = x;
-				p->y = y;
-				p->currentBuilding = g_city->cityMap[x][y];
+				n->x = x;
+				n->y = y;
+				n->currentBuilding = g_city->cityMap[x][y];
 				return;
 			}
 		}
 	}
 }
 
+void make_player(t_player *p)
+{
+	p->npc = calloc(1, sizeof(t_inner_npc));
+	t_inner_npc *n = p->npc;
+	if(!n)
+		exit(EXIT_FAILURE);
+
+	player_building_spawn(n);
+	n->currentFloor = n->currentBuilding->floors[urand() % n->currentBuilding->height];
+	n->currentRoom = n->currentFloor->floorTypeData.residentialFloorData->rooms[rand() % 4];
+	n->currentOffice = NULL;
+}
+
 void start(t_player* p) {
 	g_city = calloc(1, sizeof(t_city));
 	if (!g_city)
 		exit(EXIT_FAILURE);
-	
+
 	printf("Enter city name: ");
 	scanf("%99s", g_city->name);
 	clear();
@@ -144,13 +159,7 @@ void start(t_player* p) {
 	populateCity(g_city);
     g_city->time = 0;
 	g_city->addTime(36 * 60); //start at 12:00 next day
-	p->x = urand() % g_city->height;
-	p->y = urand() % g_city->width;
-	player_building_spawn(p);
-	// p->currentBuilding = g_city->cityMap[p->x][p->y];
-	p->currentFloor = p->currentBuilding->floors[urand() % p->currentBuilding->height];
-	p->currentRoom = p->currentFloor->floorTypeData.residentialFloorData->rooms[rand() % 4];
-	p->currentOffice = NULL;
+	make_player(p);
 
 	//printf("City generated successfully!\n\n");
 }
