@@ -16,7 +16,8 @@ SRC =	src/structures.c \
 		src/ui.c \
 		src/OpenDetective.c \
 		src/rand/zurand.c \
-		src/vector/vector.c
+		src/vector/vector.c \
+		src/dialogue.c
 OBJ = $(SRC:%.c=$(OBJ_DIR)/%.o)
 
 # Имя конечной программы
