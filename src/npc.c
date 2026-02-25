@@ -208,11 +208,13 @@ static t_relationship	*gen_rel(t_npc *from, t_npc *to)
 	r->from = from;
 	r->target = to;
 	r->type = NEUTRAL;
-	r->strength = 0;
+	r->strength = 50;
 	r->key = (t_ptrs_key){(uintptr_t)from, (uintptr_t)to};
 	return (r);
 }
 
+//return a pointer to a relationship between two given npcs
+//if such relationship do not exist, creates one
 t_relationship	*get_rel(t_npc *from, t_npc *to)
 {
 	t_ptrs_key 		k;
@@ -228,4 +230,16 @@ t_relationship	*get_rel(t_npc *from, t_npc *to)
 		HASH_ADD(hh, g_city->rel, key, sizeof(t_ptrs_key), r);
 		return (r);
 	}
+}
+
+//return a pointer to a relationship between two given npcs
+//if such relationship do not exist, return NULL
+t_relationship	*check_rel(t_npc *from, t_npc *to)
+{
+	t_ptrs_key 		k;
+	t_relationship *o;
+	o = NULL;
+	k = (t_ptrs_key){(uintptr_t)from, (uintptr_t)to};
+	HASH_FIND(hh, g_city->rel, &k, sizeof(t_ptrs_key), o);
+	return (o);
 }

@@ -39,8 +39,6 @@ typedef struct t_relationship {
 	t_ptrs_key			key;
 } t_relationship;
 
-t_relationship	*get_rel(t_npc *from, t_npc *to);
-
 typedef struct t_schedule {
 	unsigned	work_start;
 	unsigned	work_end;
@@ -135,5 +133,8 @@ void generate_family(unsigned count, t_vec* family);
 void gotoWork(t_npc* n);
 
 void npc_tick(t_npc* n);
+
+t_relationship	*get_rel(t_npc *from, t_npc *to);
+t_relationship	*check_rel(t_npc *from, t_npc *to);
 
 #endif

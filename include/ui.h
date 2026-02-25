@@ -9,6 +9,8 @@
 #include "saveload.h"
 #include "city.h"
 
+unsigned safeInput_u(unsigned min, unsigned max);
+void handle_dialogue(t_player *p, t_npc *n);
 void playerControl(t_player* p);
 
 #endif

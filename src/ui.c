@@ -67,7 +67,7 @@ static void clearInputBuffer()
 	while ((c = getchar()) != '\n' && c != EOF);
 }
 
-static unsigned safeInput_u(unsigned min, unsigned max)
+unsigned safeInput_u(unsigned min, unsigned max)
 {
 	unsigned choice;
 	while(1) {
@@ -144,30 +144,6 @@ static void handleMapMovement(t_player* p)
 	g_city->addTime(1);
 }
 
-static void handleDialogue(t_player* p, t_npc* n)
-{
-	unsigned choice;
-
-	printTime();
-	printSeparator();
-	printf("You are talking to %s %s\n", n->firstName, n->lastName);
-	printf("1: Ask about their day\n");
-	printf("2: Say goodbye\n");
-	choice = safeInput_u(1, 2);
-	switch (choice)
-	{
-	case 1:
-		printf("%s says: 'It's been a busy day at work!'\n", n->firstName);
-		break;
-	case 2:
-		printf("You say goodbye to %s.\n", n->firstName);
-		break;
-
-	default:
-		break;
-	}
-}
-
 static void handleResidentialRoom(t_player* p)
 {
 	unsigned		choice;
@@ -202,7 +178,7 @@ static void handleResidentialRoom(t_player* p)
 		choice = safeInput_u(0, npcCount);
 		if (choice == 0)
 			break ;
-		handleDialogue(p, p->npc->currentRoom->current_npcs->data[choice - 1]);
+		handle_dialogue(p, p->npc->currentRoom->current_npcs->data[choice - 1]);
 		break;
 
 	case 0:
@@ -250,7 +226,7 @@ static void handleOffice(t_player* p)
 		choice = safeInput_u(0, npcCount);
 		if (choice == 0)
 			break ;
-		handleDialogue(p, p->npc->currentOffice->current_npcs->data[choice - 1]);
+		handle_dialogue(p, p->npc->currentOffice->current_npcs->data[choice - 1]);
 		break;
 
 	case 0:
@@ -311,7 +287,7 @@ static void handleResidentialFloor(t_player* p)
 		choice = safeInput_u(0, npcCount);
 		if (choice == 0)
 			break ;
-		handleDialogue(p, p->npc->currentFloor->current_npcs->data[choice - 1]);
+		handle_dialogue(p, p->npc->currentFloor->current_npcs->data[choice - 1]);
 		break;
 
 	case 3:
@@ -385,7 +361,7 @@ static void handleOfficeFloor(t_player* p)
 		choice = safeInput_u(0, npcCount);
 		if (choice == 0)
 			break ;
-		handleDialogue(p, p->npc->currentFloor->current_npcs->data[choice - 1]);
+		handle_dialogue(p, p->npc->currentFloor->current_npcs->data[choice - 1]);
 		break;
 
 	case 3:
@@ -456,7 +432,7 @@ static void handleOutsideInteraction(t_player* p)
 		choice = safeInput_u(0, npcCount);
 		if (choice == 0)
 			break ;
-		handleDialogue(p, p->npc->currentBuilding->current_npcs->data[choice - 1]);
+		handle_dialogue(p, p->npc->currentBuilding->current_npcs->data[choice - 1]);
 		break;
 
 	case 4:

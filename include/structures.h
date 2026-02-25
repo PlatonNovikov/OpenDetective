@@ -105,6 +105,7 @@ typedef t_npc t_inner_npc;
 // type that allows player interact with npc the same way as npcs with other npcs
 typedef struct t_player {
 	char		name[100];
+	t_vec		*known_npcs; // (t_npc *) list of all npcs that player has spoken to (prob not really effective but whatever ¯\_(ツ)_/¯)
 	t_inner_npc	*npc;
 } t_player;
 

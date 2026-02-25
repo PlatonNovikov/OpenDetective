@@ -51,6 +51,7 @@ void make_player(t_player *p)
 	n->currentFloor = n->currentBuilding->floors[urand() % n->currentBuilding->height];
 	n->currentRoom = n->currentFloor->floorTypeData.residentialFloorData->rooms[rand() % 4];
 	n->currentOffice = NULL;
+	p->known_npcs = init_vec();
 }
 
 void start(t_player* p) {
