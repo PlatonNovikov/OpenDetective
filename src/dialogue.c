@@ -24,29 +24,34 @@ static void greeting(t_player *p, t_npc *n)
 		printf("%s %s says: Wassup homie? *swag* *swag*\n", n->firstName, n->lastName);
 }
 
+static t_npc *choose_known_npc(t_player *p)
+{
+	unsigned choice;
+	size_t i;
+	t_npc **seen = (t_npc **)p->known_npcs->data;
+	for (i = 0; i < p->known_npcs->size; i++)
+		printf("%zu: %s %s\n", i + 1, seen[i]->firstName, seen[i]->lastName);
+	choice = safeInput_u(1, i) - 1;
+	return (seen[choice]);
+}
+
 static void ask_about_npc(t_player *p, t_npc *n)
 {
-	size_t i = 0;
 	t_relationship *r = NULL;
-	t_npc **seen = NULL;
-	unsigned choice;
+	t_npc *choice;
 
-	printf("Ask about:\n");
-	seen = (t_npc **)p->known_npcs->data;
-	for (size_t i = 0; i < p->known_npcs->size; i++)
-		printf("%zu: %s %s\n", i + 1, seen[i]->firstName, seen[i]->lastName);
-	choice = safeInput_u(1, i - 1) - 1;
+	choice = choose_known_npc(p);
 
-	if (seen[choice] == n)
+	if (choice == n)
 	{
 		printf("\"That's me\"\n");
 		return ;
 	}
 
-	r = check_rel(n, seen[choice]);
+	r = check_rel(n, choice);
 	if (!r)
 	{
-		printf("\"I dont know anything about them\n\"");
+		printf("\"I dont know anything about them\"\n");
 		return ;
 	}
 
@@ -77,8 +82,9 @@ void handle_dialogue(t_player *p, t_npc *n)
 		vec_append(p->known_npcs, n);
 	greeting(p, n);
 	unsigned choice;
+	printf("0: stop talking\n");
 	printf("1: ask about someone\n");
-	choice = safeInput_u(1, 1);
+	choice = safeInput_u(0, 1);
 	switch (choice)
 	{
 	case 1:

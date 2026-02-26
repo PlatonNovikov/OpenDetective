@@ -151,7 +151,7 @@ static void handleResidentialRoom(t_player* p)
 
 	printTime(g_city);
 	printSeparator();
-	printf("You are in room number %d\n", p->npc->currentRoom->room_number);
+	printf("You are in room number %d\n", p->npc->currentRoom->room_number + 1);
 	if (npcCount > 0)
 	{
 		if (npcCount == 1)
@@ -199,7 +199,7 @@ static void handleOffice(t_player* p)
 
 	printTime(g_city);
 	printSeparator();
-	printf("You are in office number %d of %s\n", p->npc->currentOffice->office_number, p->npc->currentOffice->name);
+	printf("You are in office number %d of %s\n", p->npc->currentOffice->office_number + 1, p->npc->currentOffice->name);
 	if (npcCount > 0)
 	{
 		if (npcCount == 1)
@@ -247,7 +247,7 @@ static void handleResidentialFloor(t_player* p)
 
 	printTime(p->npc->currentBuilding->parentCity);
 	printSeparator();
-	printf("You are on floor %d of %s\n", p->npc->currentFloor->floorNumber, p->npc->currentBuilding->name);
+	printf("You are on floor %d of %s\n", p->npc->currentFloor->floorNumber + 1, p->npc->currentBuilding->name);
 	if (npcCount > 0)
 	{
 		if (npcCount == 1)
@@ -261,15 +261,20 @@ static void handleResidentialFloor(t_player* p)
 	printf("2: Talk to someone\n");
 	printf("3: Go to another floor\n");
 	if (p->npc->currentFloor->floorNumber == 0)
+	{
 		printf("0: Exit building\n");
-	choice = safeInput_u(p->npc->currentFloor->floorNumber > 0, 3);
+		choice = safeInput_u(0, 3);
+	}
+	else
+		choice = safeInput_u(1, 3);
+
 	switch (choice)
 	{
 	case 1:
 		printf("Choose a room to enter:\n");
 		for (unsigned i = 0; i < p->npc->currentFloor->floorTypeData.residentialFloorData->room_count; i++)
 		{
-			printf("%d: Room %d\n", i + 1, p->npc->currentFloor->floorTypeData.residentialFloorData->rooms[i]->room_number);
+			printf("%d: Room %d\n", i + 1, p->npc->currentFloor->floorTypeData.residentialFloorData->rooms[i]->room_number + 1);
 		}
 		choice = safeInput_u(1, p->npc->currentFloor->floorTypeData.residentialFloorData->room_count);
 		p->npc->currentRoom = p->npc->currentFloor->floorTypeData.residentialFloorData->rooms[choice - 1];
@@ -294,7 +299,7 @@ static void handleResidentialFloor(t_player* p)
 		printf("Choose a floor to go to (0 to cancel):\n");
 		for (unsigned i = 0; i < p->npc->currentBuilding->height; i++)
 		{
-			printf("%d: Floor %d\n", i + 1, i);
+			printf("%d: Floor %d\n", i + 1, i + 1);
 		}
 		choice = safeInput_u(0, p->npc->currentBuilding->height);
 		if (choice == 0)
@@ -321,7 +326,7 @@ static void handleOfficeFloor(t_player* p)
 
 	printTime(p->npc->currentBuilding->parentCity);
 	printSeparator();
-	printf("You are on floor %d of %s\n", p->npc->currentFloor->floorNumber, p->npc->currentBuilding->name);
+	printf("You are on floor %d of %s\n", p->npc->currentFloor->floorNumber + 1, p->npc->currentBuilding->name);
 	if (npcCount > 0)
 	{
 		if (npcCount == 1)
@@ -335,15 +340,20 @@ static void handleOfficeFloor(t_player* p)
 	printf("2: Talk to someone\n");
 	printf("3: Go to another floor\n");
 	if (p->npc->currentFloor->floorNumber == 0)
+	{
 		printf("0: Exit building\n");
-	choice = safeInput_u(p->npc->currentFloor->floorNumber > 0, 3);
+		choice = safeInput_u(0, 3);
+	}
+	else
+		choice = safeInput_u(1, 3);
+
 	switch (choice)
 	{
 	case 1:
 		printf("Choose an office to enter:\n");
 		for (unsigned i = 0; i < p->npc->currentFloor->floorTypeData.officeFloorData->office_count; i++)
 		{
-			printf("%d: Office %d\n", i + 1, p->npc->currentFloor->floorTypeData.officeFloorData->offices[i]->office_number);
+			printf("%d: Office %d\n", i + 1, p->npc->currentFloor->floorTypeData.officeFloorData->offices[i]->office_number + 1);
 		}
 		choice = safeInput_u(1, p->npc->currentFloor->floorTypeData.officeFloorData->office_count);
 		p->npc->currentOffice = p->npc->currentFloor->floorTypeData.officeFloorData->offices[choice - 1];
@@ -368,7 +378,7 @@ static void handleOfficeFloor(t_player* p)
 		printf("Choose a floor to go to (0 to cancel):\n");
 		for (unsigned i = 0; i < p->npc->currentBuilding->height; i++)
 		{
-			printf("%d: Floor %d\n", i + 1, i);
+			printf("%d: Floor %d\n", i + 1, i + 1);
 		}
 		choice = safeInput_u(0, p->npc->currentBuilding->height);
 		if (choice == 0)
