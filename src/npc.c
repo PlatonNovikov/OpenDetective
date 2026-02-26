@@ -68,7 +68,7 @@ void generate_family(unsigned count, t_vec *family) {
 			t_relationship* r = get_rel(n, family->data[j]);
 			r->strength = 50;
 			r->target = family->data[j];
-			r->type = FAMILY;
+			r->type |= FAMILY;
 		}
 	}
 }
@@ -207,7 +207,7 @@ static t_relationship	*gen_rel(t_npc *from, t_npc *to)
 
 	r->from = from;
 	r->target = to;
-	r->type = NEUTRAL;
+	r->type = 0;
 	r->strength = 50;
 	r->key = (t_ptrs_key){(uintptr_t)from, (uintptr_t)to};
 	return (r);

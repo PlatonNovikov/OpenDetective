@@ -67,8 +67,7 @@ typedef struct t_residentialFloor{
 
 typedef struct t_office{
 	char		name[100];
-	t_npc		**employees;
-	unsigned	employee_count;
+	t_vec		*employees;	// (t_npc *) NPCs assigned to this office
 	t_floor		*parentFloor;
 	unsigned	office_number;
 	t_vec		*current_npcs;  // (t_npc *) Currently present NPCs

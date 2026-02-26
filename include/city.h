@@ -39,6 +39,8 @@ size_t currentTimeHour(void); //returns current hour
 size_t currentTimeMinute(void); //returns current minute
 size_t currentDayMinute(void); //returns current minute
 
+void set_coworkers();
+
 extern t_city *g_city;
 
 #endif

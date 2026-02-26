@@ -28,12 +28,7 @@ static void f_office_gen(t_floor *parent_f)
 			printf("Error allocating memory for office.\n");
 			exit(1);
 		}
-		o->employee_count = 0;
-		o->employees = (t_npc**)calloc(EMPLOYEES_PER_OFFICE, sizeof(t_npc*));
-		if (!o->employees) {
-			printf("Error allocating memory for employees.\n");
-			exit(1);
-		}
+		o->employees = init_vec();
 		o->current_npcs = init_vec();
 		o->parentFloor = parent_f;
 		o->office_number = i;
@@ -166,7 +161,7 @@ t_office* getFreeWorkplace(){
 	unsigned floorB = floorC;
 	unsigned officeC = (unsigned)zurand() % ((t_building *)g_city->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->office_count;
 	unsigned officeB = officeC;
-	while (((t_building *)g_city->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->offices[officeC]->employee_count == 5){
+	while (((t_building *)g_city->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->offices[officeC]->employees->size == 5){
 		if (officeC < ((t_building *)g_city->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->office_count - 1){
 			officeC++;
 		} else {
@@ -187,6 +182,33 @@ t_office* getFreeWorkplace(){
 		}
 	}
 	return ((t_building *)g_city->officeBuildings->data[countC])->floors[floorC]->floorTypeData.officeFloorData->offices[officeC];
+}
+
+void set_coworkers()
+{
+	for (size_t i = 0; i < g_city->officeBuildings->size; i++)
+	{
+		t_building *b = g_city->officeBuildings->data[i];
+		for (size_t j = 0; j < b->height; j++)
+		{
+			t_officeFloor *of = b->floors[j]->floorTypeData.officeFloorData;
+			for (size_t k = 0; k < of->office_count; k++)
+			{
+				t_office *o = of->offices[k];
+				for (size_t l = 0; l < o->employees->size; l++)
+				{
+					t_npc *n = o->employees->data[l];
+					for (size_t m = 0; m < o->employees->size; m++)
+					{
+						if (m == l)
+							continue;
+						t_relationship *r = get_rel(n, o->employees->data[m]);
+						r->type |= COWORKER;
+					}
+				}
+			}
+		}
+	}
 }
 
 void populateCity(){
@@ -212,10 +234,9 @@ void populateCity(){
 					vec_append(r->current_npcs, new_npc);
 					if (new_npc->placeOfWork)
 					{
-						new_npc->placeOfWork->employees[new_npc->placeOfWork->employee_count] = new_npc;
+						vec_append(new_npc->placeOfWork->employees, new_npc);
 						new_npc->dailySchedule->work_start = 9 * 60;	//9:00
 						new_npc->dailySchedule->work_end = 17 * 60;		//17:00
-						new_npc->placeOfWork->employee_count++;
 					}
 				}
 				else{
@@ -225,20 +246,20 @@ void populateCity(){
 					((t_npc *)family->data[0])->placeOfResidence = getFreeResidence(g_city);
 					for (unsigned l = 0; l < count; l++)
 					{
-						vec_append(r->current_npcs, family->data[l]);
-						((t_npc *)family->data[l])->x = ((t_npc *)family->data[0])->placeOfResidence->parentFloor->parentBuilding->x;
-						((t_npc *)family->data[l])->y = ((t_npc *)family->data[0])->placeOfResidence->parentFloor->parentBuilding->y;
-						((t_npc *)family->data[l])->placeOfResidence = ((t_npc *)family->data[0])->placeOfResidence;
-						((t_npc *)family->data[l])->placeOfWork = getFreeWorkplace(g_city);
-						((t_npc *)family->data[l])->currentRoom = r;
-						((t_npc *)family->data[l])->currentFloor = ((t_npc *)family->data[l])->placeOfResidence->parentFloor;
-						((t_npc *)family->data[l])->currentBuilding = ((t_npc *)family->data[l])->placeOfResidence->parentFloor->parentBuilding;
-						if (((t_npc *)family->data[l])->placeOfWork)
+						t_npc* n = family->data[l];
+						vec_append(r->current_npcs, n);
+						n->x = ((t_npc *)family->data[0])->placeOfResidence->parentFloor->parentBuilding->x;
+						n->y = ((t_npc *)family->data[0])->placeOfResidence->parentFloor->parentBuilding->y;
+						n->placeOfResidence = ((t_npc *)family->data[0])->placeOfResidence;
+						n->placeOfWork = getFreeWorkplace(g_city);
+						n->currentRoom = r;
+						n->currentFloor = n->placeOfResidence->parentFloor;
+						n->currentBuilding = n->placeOfResidence->parentFloor->parentBuilding;
+						if (n->placeOfWork)
 						{
-							((t_npc *)family->data[l])->placeOfWork->employees[((t_npc *)family->data[l])->placeOfWork->employee_count] = ((t_npc *)family->data[l]);
-							((t_npc *)family->data[l])->placeOfWork->employee_count++;
-							((t_npc *)family->data[l])->dailySchedule->work_start = 9 * 60;	//9:00
-							((t_npc *)family->data[l])->dailySchedule->work_end = 17 * 60;	//17:00
+							vec_append(n->placeOfWork->employees, n);
+							n->dailySchedule->work_start = 9 * 60;	//9:00
+							n->dailySchedule->work_end = 17 * 60;	//17:00
 						}
 					}
 

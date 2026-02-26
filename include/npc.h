@@ -23,10 +23,9 @@ typedef struct {
 } t_ptrs_key;
 
 typedef enum e_relationship_type {
-	FAMILY,
-	FRIEND,
-	COWORKER,
-	NEUTRAL
+	FAMILY		= 1,
+	FRIEND		= 2,
+	COWORKER	= 4,
 } e_relationship_type;
 
 typedef struct t_relationship {

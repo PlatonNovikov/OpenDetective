@@ -158,6 +158,8 @@ void start(t_player* p) {
 	}
 	g_city->npcList = init_vec();
 	populateCity(g_city);
+	set_coworkers();
+	
     g_city->time = 0;
 	g_city->addTime(36 * 60); //start at 12:00 next day
 	make_player(p);
@@ -289,7 +291,8 @@ int main(int argc, char *argv[])
 	clear();
 	if (choice == 2)
 	{
-		printf("Not implemented yet");
+		printf("Not implemented yet\n");
+		return 0;
 		// loadSavefile(&p);
 	}
 	else

@@ -21,7 +21,7 @@ static void ask_about_npc(t_player *p, t_npc *n)
 	unsigned choice;
 
 	printf("Ask about:\n");
-	seen = p->known_npcs->data;
+	seen = (t_npc **)p->known_npcs->data;
 	for (size_t i = 0; i < p->known_npcs->size; i++)
 		printf("%zu: %s %s\n", i + 1, seen[i]->firstName, seen[i]->lastName);
 	choice = safeInput_u(1, i - 1) - 1;
@@ -40,24 +40,18 @@ static void ask_about_npc(t_player *p, t_npc *n)
 	}
 
 	printf("\"I know them, ");
-	switch (r->type)
-	{
-	case NEUTRAL:
+	if (!r->type)
 		printf("nothing special, ");
-		break;
 
-	case FAMILY:
+	if (r->type & FAMILY)
 		printf("they're my family, ");
-		break;
 
-	case FRIEND:
+	if (r->type & FRIEND)
 		printf("we're friends, ");
-		break;
 
-	case COWORKER:
+	if (r->type & COWORKER)
 		printf("we're coworkers, ");
-		break;
-	}
+
 	if (r->strength < 20)
 		printf("i hate them\"\n");
 	else if (r->strength < 70)
