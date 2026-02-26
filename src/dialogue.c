@@ -2,6 +2,17 @@
 #include "../include/city.h"
 #include "../include/ui.h"
 
+// checks if player is already knows given npc
+static bool know_dup(t_player *p, t_npc *n)
+{
+	for (size_t i = 0; i < p->known_npcs->size; i++)
+	{
+		if (p->known_npcs->data[i] == n)
+			return (true);
+	}
+	return (false);
+}
+
 static void greeting(t_player *p, t_npc *n)
 {
 	t_relationship *rel = get_rel(n, p->npc);
@@ -62,7 +73,8 @@ static void ask_about_npc(t_player *p, t_npc *n)
 
 void handle_dialogue(t_player *p, t_npc *n)
 {
-	vec_append(p->known_npcs, n);
+	if (!know_dup(p, n))
+		vec_append(p->known_npcs, n);
 	greeting(p, n);
 	unsigned choice;
 	printf("1: ask about someone\n");
