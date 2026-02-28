@@ -2,6 +2,18 @@
 #include "../include/city.h"
 #include "../include/ui.h"
 
+// returns vector of all relationship of given npc
+static t_vec *list_npcs_known_npcs(t_npc *n)
+{
+	t_vec *rel = init_vec();
+	t_relationship *r;
+	for (r = g_city->rel; r != NULL; r = r->hh.next)
+	{
+		if (r->from == n)
+			vec_append(rel, r);
+	}
+	return (rel);
+}
 // checks if player is already knows given npc
 static bool know_dup(t_player *p, t_npc *n)
 {
@@ -124,6 +136,19 @@ static void ask_about_npc(t_player *p, t_npc *n)
 	}
 }
 
+static void tell_about_connections(t_player *p, t_npc *n)
+{
+	t_vec					*rel_vec = list_npcs_known_npcs(n);
+	const t_relationship	**rel_list = rel_vec->data;
+
+	for (size_t i = 0; i < rel_vec->size; i++)
+	{
+		printf("%ld: %s %s. Type: %d\n", i + 1, rel_list[i]->target->firstName, rel_list[i]->target->lastName, rel_list[i]->type);
+		vec_append(p->known_npcs, rel_list[i]->target);
+	}
+	vec_free(rel_vec);
+}
+
 void handle_dialogue(t_player *p, t_npc *n)
 {
 	if (!know_dup(p, n))
@@ -131,12 +156,17 @@ void handle_dialogue(t_player *p, t_npc *n)
 	greeting(p, n);
 	unsigned choice;
 	printf("1: ask about someone\n");
+	printf("2: ask about their connections\n");
 	printf("0: stop talking\n");
-	choice = safeInput_u(0, 1);
+	choice = safeInput_u(0, 2);
 	switch (choice)
 	{
 	case 1:
 		ask_about_npc(p, n);
+		break;
+
+	case 2:
+		tell_about_connections(p, n);
 		break;
 
 	default:

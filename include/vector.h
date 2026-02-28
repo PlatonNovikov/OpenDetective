@@ -19,11 +19,9 @@ typedef struct s_vec
 } t_vec;
 
 t_vec	*init_vec(void);
-
 void	vec_append(t_vec *vec, void *ptr);
-
 bool	vec_ord_rm(t_vec *vec, void *ptr);
-
 void	*vec_get(t_vec *vec, size_t index);
+void	vec_free(t_vec *vec);
 
 #endif

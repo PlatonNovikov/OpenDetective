@@ -61,3 +61,13 @@ void	*vec_get(t_vec *vec, size_t index)
 		return (NULL);
 	return (vec->data[index]);
 }
+
+//frees a vector
+void	vec_free(t_vec *vec)
+{
+	if (!vec)
+		return ;
+	if (vec->data)
+		free(vec->data);
+	free(vec);
+}
