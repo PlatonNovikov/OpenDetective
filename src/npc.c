@@ -197,6 +197,7 @@ void npc_tick(t_npc* n)
 	}
 }
 
+// generates default relationship between given npcs
 static t_relationship	*gen_rel(t_npc *from, t_npc *to)
 {
 	t_relationship	*r = NULL;

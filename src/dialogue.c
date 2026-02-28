@@ -35,26 +35,8 @@ static t_npc *choose_known_npc(t_player *p)
 	return (seen[choice]);
 }
 
-static void ask_about_npc(t_player *p, t_npc *n)
+static void introduce_person(t_relationship *r)
 {
-	t_relationship *r = NULL;
-	t_npc *choice;
-
-	choice = choose_known_npc(p);
-
-	if (choice == n)
-	{
-		printf("\"That's me\"\n");
-		return ;
-	}
-
-	r = check_rel(n, choice);
-	if (!r)
-	{
-		printf("\"I dont know anything about them\"\n");
-		return ;
-	}
-
 	printf("\"I know them, ");
 	if (!r->type)
 		printf("nothing special, ");
@@ -73,7 +55,73 @@ static void ask_about_npc(t_player *p, t_npc *n)
 	else if (r->strength < 70)
 		printf("not much to say about it\"\n");
 	else
-		printf("they're great\"\n");
+		printf("they're great\"\n\n");
+}
+
+static void tell_npc_workplace(t_npc *n, t_npc *to_ask)
+{
+	if (!to_ask->placeOfWork)
+	{
+		printf("They don't work anywhere\n");
+		return ;
+	}
+	t_building *b = to_ask->placeOfWork->parentFloor->parentBuilding;
+	t_floor *f = to_ask->placeOfWork->parentFloor;
+	t_office *o = to_ask->placeOfWork;
+	printf("They work at office number %d, floor number %d at building %s (x: %d, y: %d)\n", o->office_number, f->floorNumber, b->name, b->x, b->y);
+}
+
+static void tell_npc_residence(t_npc *n, t_npc *to_ask)
+{
+	t_building *b = to_ask->placeOfResidence->parentFloor->parentBuilding;
+	t_floor *f = to_ask->placeOfResidence->parentFloor;
+	t_room *r = to_ask->placeOfResidence;
+	printf("They live in room number %d, floor number %d at building %s (x: %d, y: %d)\n", r->room_number, f->floorNumber, b->name, b->x, b->y);
+}
+
+static void ask_about_npc(t_player *p, t_npc *n)
+{
+	t_relationship	*r = NULL;
+	int				choice = -1;
+	t_npc			*to_ask;
+
+	to_ask = choose_known_npc(p);
+
+	if (to_ask == n)
+	{
+		printf("\"That's me\"\n");
+		return ;
+	}
+
+	r = check_rel(n, to_ask);
+	if (!r)
+	{
+		printf("\"I dont know anything about them\"\n");
+		return ;
+	}
+	introduce_person(r);
+
+	while (choice)
+	{
+		printf("1: ask about %s %s's place of residence\n", to_ask->firstName, to_ask->lastName);
+		printf("2: ask about %s %s's place of workplace\n", to_ask->firstName, to_ask->lastName);
+		printf("0: stop asking about %s %s\n", to_ask->firstName, to_ask->lastName);
+		choice = safeInput_u(0, 2);
+
+		switch (choice)
+		{
+		case 1:
+			tell_npc_residence(n, to_ask);
+			break;
+
+		case 2:
+			tell_npc_workplace(n, to_ask);
+			break;
+
+		default:
+			break;
+		}
+	}
 }
 
 void handle_dialogue(t_player *p, t_npc *n)
@@ -82,8 +130,8 @@ void handle_dialogue(t_player *p, t_npc *n)
 		vec_append(p->known_npcs, n);
 	greeting(p, n);
 	unsigned choice;
-	printf("0: stop talking\n");
 	printf("1: ask about someone\n");
+	printf("0: stop talking\n");
 	choice = safeInput_u(0, 1);
 	switch (choice)
 	{
